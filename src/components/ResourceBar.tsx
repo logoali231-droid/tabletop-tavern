@@ -12,9 +12,10 @@ interface Props {
   state: GameState;
   onOpenPrestige: () => void;
   onOpenMinigame: () => void;
+  onOpenDaily: () => void; // Nova prop
 }
 
-export default function ResourceBar({ state, onOpenPrestige, onOpenMinigame }: Props) {
+export default function ResourceBar({ state, onOpenPrestige, onOpenMinigame, onOpenDaily }: Props) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--panel-bg)', padding: '15px', border: '2px solid var(--border-color)', borderRadius: '10px', boxShadow: '0 4px 10px rgba(0,0,0,0.5)' }}>
       
@@ -42,6 +43,11 @@ export default function ResourceBar({ state, onOpenPrestige, onOpenMinigame }: P
       </div>
 
       <div style={{ display: 'flex', gap: '10px' }}>
+        {/* Botão Diário */}
+        <button onClick={onOpenDaily} style={{ background: 'var(--gold)', color: 'black', border: 'none', padding: '8px 15px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
+           🎁 Diário
+        </button>
+        
         <button onClick={onOpenMinigame} style={{ background: 'var(--btn-bg)', color: 'white', border: '1px solid var(--border-color)', padding: '8px 15px', borderRadius: '5px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
           <img src="/icons/dice.svg" className="game-icon" style={{marginRight: '5px'}} /> Jogar Dados
         </button>

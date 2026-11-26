@@ -1,4 +1,4 @@
-import { BuildingData, UpgradeData, AchievementData, PrestigeUpgradeData } from '../types';
+import { BuildingData, UpgradeData, AchievementData, PrestigeUpgradeData, QuestData } from '../types';
 
 export const buildingsData: BuildingData[] = [
   {
@@ -94,6 +94,50 @@ export const achievementsData: AchievementData[] = [
   { id: 'sessionMaster', name: 'Mestre das Sessões', desc: 'Hospede 100 sessões.', req: (s) => s.clicks >= 100 },
   { id: 'richTavern', name: 'Taverna Rica', desc: 'Tenha 1000 de Ouro.', req: (s) => s.gold >= 1000 },
   { id: 'fateTwister', name: 'Manipulador do Destino', desc: 'Alcance 5 Campanhas.', req: (s) => s.campaigns >= 5 }
+];
+
+
+export const questsData: QuestData[] = [
+  {
+    id: 'q_click50',
+    name: 'Primeiros Passos',
+    desc: 'Hospede 50 sessões.',
+    req: (s) => s.clicks >= 50,
+    rewardDesc: '1.000 Jogadores',
+    applyReward: (s) => { s.players += 1000; s.playersEarned += 1000; }
+  },
+  {
+    id: 'q_buyTables',
+    name: 'Mobiliando a Taverna',
+    desc: 'Compre 10 Mesas de Jogo.',
+    req: (s) => (s.buildings.gameTable || 0) >= 10,
+    rewardDesc: '10 Dados',
+    applyReward: (s) => { s.dice += 10; s.diceEarned += 10; }
+  },
+  {
+    id: 'q_minigame',
+    name: 'Sorte de Iniciante',
+    desc: 'Jogue o minigame de Dados 3 vezes.',
+    req: (s) => s.minigamePlays >= 3,
+    rewardDesc: '2 Inspiração',
+    applyReward: (s) => { s.inspiration += 2; s.inspirationEarned += 2; }
+  },
+  {
+    id: 'q_firstGold',
+    name: 'Lucrando com a Diversão',
+    desc: 'Acumule 1.000 de Ouro.',
+    req: (s) => s.gold >= 1000,
+    rewardDesc: '5.000 Jogadores',
+    applyReward: (s) => { s.players += 5000; s.playersEarned += 5000; }
+  },
+  {
+    id: 'q_destiny',
+    name: 'O Chamado do Destino',
+    desc: 'Alcance 100.000 Jogadores ganhos no total.',
+    req: (s) => s.playersEarned >= 100000,
+    rewardDesc: '1 Destino',
+    applyReward: (s) => { s.fate += 1; s.fateEarned += 1; }
+  }
 ];
 
 export const getBuildingCost = (baseCost: number, count: number) => Math.floor(baseCost * Math.pow(1.15, count));
