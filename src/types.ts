@@ -1,31 +1,16 @@
 export type ResourceType = 'players' | 'gold' | 'dice' | 'inspiration' | 'fate';
 
 export interface GameState {
-  players: number;
-  playersEarned: number;
-  gold: number;
-  goldEarned: number;
-  dice: number;
-  diceEarned: number;
-  inspiration: number;
-  inspirationEarned: number;
-  fate: number;
-  fateEarned: number;
-  
-  clicks: number;
-  clickMultiplier: number;
-  globalMultiplier: number;
-  
+  players: number; playersEarned: number;
+  gold: number; goldEarned: number;
+  dice: number; diceEarned: number;
+  inspiration: number; inspirationEarned: number;
+  fate: number; fateEarned: number;
+  clicks: number; clickMultiplier: number; globalMultiplier: number;
   buildings: Record<string, number>;
   buildingMultipliers: Record<string, number>;
   upgradesBought: string[];
-  
-  // Prestígio
-  campaigns: number;
-  campaignMultiplier: number;
-  prestigeUpgradesBought: string[];
-  
-  // Buffs Temporários
+  campaigns: number; campaignMultiplier: number; prestigeUpgradesBought: string[];
   activeBoost: { id: string; name: string; multiplier: number; timeLeft: number } | null;
 }
 
@@ -35,6 +20,7 @@ export interface BuildingData {
   baseCost: number;
   costRes: ResourceType;
   desc: string;
+  icon: string; // Novo
   yield: Partial<Record<ResourceType, number>>;
   req: (state: GameState) => boolean;
 }
@@ -45,6 +31,7 @@ export interface UpgradeData {
   cost: number;
   costRes: ResourceType;
   desc: string;
+  icon: string; // Novo
   req: (state: GameState) => boolean;
   apply: (state: GameState) => void;
 }
@@ -52,10 +39,11 @@ export interface UpgradeData {
 export interface PrestigeUpgradeData {
   id: string;
   name: string;
-  cost: number; // Custa Destino
+  cost: number;
   desc: string;
+  icon: string; // Novo
   req: (state: GameState) => boolean;
-  apply: (state: GameState) => void; // Aplicado permanentemente
+  apply: (state: GameState) => void;
 }
 
 export interface AchievementData {

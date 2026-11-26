@@ -33,6 +33,21 @@ body {
   padding: 20px;
 }
 
+/* ESTILO DOS ÍCONES */
+.game-icon {
+  width: 24px;
+  height: 24px;
+  filter: invert(0.8) sepia(0.5) saturate(2) hue-rotate(-10deg); /* Deixa o SVG preto em um tom bege/dourado */
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+.game-icon-large {
+  width: 150px;
+  height: 150px;
+  filter: drop-shadow(0 0 10px rgba(244, 162, 97, 0.4)) invert(0.9);
+}
+
 .floating-text {
   position: absolute;
   color: var(--text-highlight);
@@ -50,8 +65,8 @@ body {
 }
 
 @keyframes bounce {
-  from { transform: translateY(0); }
-  to { transform: translateY(-10px); }
+  from { transform: translateY(0) rotate(15deg); }
+  to { transform: translateY(-10px) rotate(15deg); }
 }
 
 @keyframes pulse {
