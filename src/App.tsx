@@ -6,14 +6,25 @@ import { playSound } from './utils/sound';
 import {
   BOSS_FIRST_DELAY,
   BOSS_MIN_PLAYERS,
+  FAMILIAR_XP_PER_SECOND,
+  FESTIVAL_POINTS_PER_SECOND,
   LEGACY_SAVE_KEY,
   PEST_CLICKS,
   PEST_FIRST_DELAY,
   PEST_MIN_PLAYERS,
   RESOURCE_IDS,
   SAVE_KEY,
+  addFamiliarXp,
+  addFestivalPoints,
   addResource,
   applyBossVictory,
+  bossAttack,
+  bossRitual,
+  bossTaunt,
+  bossTick,
+  claimFestivalTier,
+  clearPantheonSlot,
+  currentMonthKey,
   expelPest,
   grantArtificerDice,
   nextPestDelay,
@@ -23,7 +34,6 @@ import {
   applyAchievements,
   applyDiceRoll,
   applyGoldenEffect,
-  bossHitDamage,
   collectStormDie,
   createBoss,
   diceRollMessage,
@@ -51,6 +61,7 @@ import {
   resolveRoll,
   rollGoldReward,
   saveGame,
+  setFamiliarAura,
   stormDieReward,
   serializeSave,
   tryBuyBuilding,
@@ -59,6 +70,7 @@ import {
   tryBuyUpgrade,
   tryEquipDie,
   tryHarvestPlot,
+  trySeatGod,
   tryPlantSeed,
   trySellBuilding,
   trySpeedPlot,
@@ -81,6 +93,9 @@ import NewsTicker from './components/NewsTicker';
 import OfflineModal from './components/OfflineModal';
 import GardenModal from './components/GardenModal';
 import StudioModal from './components/StudioModal';
+import FamiliarModal from './components/FamiliarModal';
+import FestivalModal from './components/FestivalModal';
+import PantheonModal from './components/PantheonModal';
 import HelpModal from './components/HelpModal';
 import Tutorial from './components/Tutorial';
 import { GARDEN_TUTORIAL_KEY, gardenTutorialSteps, TUTORIAL_KEY, tutorialSteps } from './data/tutorial';
@@ -274,8 +289,8 @@ export default function App() {
         return;
       }
 
-      const timeLeft = Math.round((active.timeLeft - 0.5) * 10) / 10;
-      if (timeLeft <= 0) {
+      const tick = bossTick(current, active, 0.5);
+      if (tick.expired) {
         bossRef.current = null;
         setBoss(null);
         nextBossAt.current = Date.now() + nextBossDelay();
@@ -287,9 +302,8 @@ export default function App() {
         return;
       }
 
-      const next: BossEncounter = { ...active, timeLeft };
-      bossRef.current = next;
-      setBoss(next);
+      bossRef.current = tick.boss;
+      setBoss(tick.boss);
     }, 500);
     return () => window.clearInterval(interval);
   }, [pushToast]);
@@ -328,6 +342,14 @@ export default function App() {
         for (const resource of RESOURCE_IDS) {
           addResource(next, resource, production[resource] * 0.1);
         }
+        next.familiar = {
+          ...next.familiar,
+          xp: next.familiar.xp + FAMILIAR_XP_PER_SECOND * 0.1,
+        };
+        const month = currentMonthKey();
+        next.festival = next.festival.month === month
+          ? { ...next.festival, points: next.festival.points + FESTIVAL_POINTS_PER_SECOND * 0.1 }
+          : { month, points: FESTIVAL_POINTS_PER_SECOND * 0.1, claimed: [] };
         return applyAchievements(grantArtificerDice(next));
       });
     }, 100);
@@ -449,7 +471,7 @@ export default function App() {
       if (Math.random() < (diceGod ? 0.2 : 0.1)) addResource(next, 'dice', 1);
       if (Math.random() < (diceGod ? 0.04 : 0.02)) addResource(next, 'inspiration', 1);
       if (Math.random() < 0.01) addResource(next, 'gold', Math.max(5, production.gold * 12));
-      return applyAchievements(next);
+      return applyAchievements(addFamiliarXp(addFestivalPoints(next, 1), 1));
     });
 
     if (event.clientX > 0 || event.clientY > 0) {
@@ -510,7 +532,7 @@ export default function App() {
     playSound('prestige', current.soundOn);
     stormQueue.current = [];
     resetBossClock();
-    setState((previous) => prestigeReset(previous));
+    setState((previous) => addFamiliarXp(prestigeReset(previous), 400));
     setModal(null);
     pushToast({ title: 'Nova campanha', desc: `Você ganhou ${gained} Destino.`, icon: '/icons/fate.svg' });
     scheduleGolden();
@@ -530,36 +552,62 @@ export default function App() {
     playSound('prestige', current.soundOn);
     stormQueue.current = [];
     resetBossClock();
-    setState((previous) => publishReset(previous));
+    setState((previous) => addFamiliarXp(publishReset(previous), 800));
     setModal(null);
     pushToast({ title: 'Saga publicada', desc: `Você ganhou ${gained} Lendas.`, icon: '/icons/crown.svg' });
     scheduleGolden();
   };
 
-  const hitBoss = () => {
-    const current = bossRef.current;
-    if (!current) return;
-    const game = stateRef.current;
-    const damage = bossHitDamage(game, current);
-    playSound('click', game.soundOn);
-
-    const hp = current.hp - damage;
-    if (hp > 0) {
-      const next: BossEncounter = { ...current, hp, combo: current.combo + 1 };
-      bossRef.current = next;
-      setBoss(next);
-      return;
-    }
-
-    const result = applyBossVictory(game);
-    setState(result.state);
+  const finishBoss = (current: BossEncounter, source?: GameState) => {
+    const game = source ?? stateRef.current;
+    const result = applyBossVictory(game, current);
+    setState(addFamiliarXp(addFestivalPoints(result.state, 50), 120));
     resetBossClock();
     playSound('golden', game.soundOn);
     pushToast({
       title: 'Mesa ao Vivo vencida',
-      desc: `${current.name} caiu: +2 Destino e Troféu da Mesa (x3 por 30s).`,
+      desc: `${current.name} caiu: +${result.gains.fate} Destino, Troféu da Mesa (x3 por 30s) e recompensa extra pela pressa.`,
       icon: current.icon,
     });
+  };
+
+  const hitBoss = () => {
+    const current = bossRef.current;
+    if (!current) return;
+    playSound('click', stateRef.current.soundOn);
+    const next = bossAttack(stateRef.current, current);
+    if (next.hp <= 0) {
+      finishBoss(next);
+      return;
+    }
+    bossRef.current = next;
+    setBoss(next);
+  };
+
+  const tauntBoss = () => {
+    const current = bossRef.current;
+    if (!current) return;
+    const result = bossTaunt(stateRef.current, current);
+    if (!result) return;
+    playSound('click', result.state.soundOn);
+    setState(result.state);
+    bossRef.current = result.boss;
+    setBoss(result.boss);
+  };
+
+  const ritualBoss = () => {
+    const current = bossRef.current;
+    if (!current) return;
+    const result = bossRitual(stateRef.current, current);
+    if (!result) return;
+    playSound('upgrade', result.state.soundOn);
+    setState(result.state);
+    if (result.boss.hp <= 0) {
+      finishBoss(result.boss, result.state);
+      return;
+    }
+    bossRef.current = result.boss;
+    setBoss(result.boss);
   };
 
   const buyEditorial = (id: string) => {
@@ -645,7 +693,7 @@ export default function App() {
 
     if (golden.bonus) {
       const gains = stormDieReward(current);
-      setState((previous) => collectStormDie(previous));
+      setState((previous) => addFestivalPoints(collectStormDie(previous), 20));
       // Every storm die must visibly pay out, or the rain feels like decoration.
       if (event) {
         const id = particleId.current + 1;
@@ -666,7 +714,7 @@ export default function App() {
 
     const effect = pickGoldenEffect();
     const targetId = effect.id === 'buildingSpecial' ? pickBuildingSpecial(current) : null;
-    setState((previous) => applyGoldenEffect(previous, effect, targetId));
+    setState((previous) => addFestivalPoints(applyGoldenEffect(previous, effect, targetId), 20));
 
     const target = targetId ? buildingsData.find((entry) => entry.id === targetId) : null;
     pushToast({
@@ -699,7 +747,7 @@ export default function App() {
     const result = tryHarvestPlot(stateRef.current, index);
     if (!result) return;
     playSound('upgrade', stateRef.current.soundOn);
-    setState(result.state);
+    setState(addFamiliarXp(addFestivalPoints(result.state, 10), 20));
     pushToast({ title: 'Trama colhida', desc: result.message, icon: '/icons/scroll.svg' });
     if (result.hybrid) {
       pushToast({
@@ -712,6 +760,36 @@ export default function App() {
 
   const speedPlot = (index: number) => {
     const next = trySpeedPlot(stateRef.current, index);
+    if (!next) return;
+    playSound('click', stateRef.current.soundOn);
+    setState(next);
+  };
+
+  /* ---------------- familiar, festival e panteão ---------------- */
+  const pickFamiliarAura = (id: string) => {
+    const next = setFamiliarAura(stateRef.current, id);
+    if (!next) return;
+    playSound('upgrade', stateRef.current.soundOn);
+    setState(next);
+  };
+
+  const claimTier = (id: string) => {
+    const result = claimFestivalTier(stateRef.current, id);
+    if (!result) return;
+    playSound('golden', result.state.soundOn);
+    setState(result.state);
+    pushToast({ title: 'Festival do Mês', desc: result.message, icon: '/icons/crown.svg' });
+  };
+
+  const seatGod = (godId: string, slot: number) => {
+    const next = trySeatGod(stateRef.current, godId, slot);
+    if (!next) return;
+    playSound('upgrade', stateRef.current.soundOn);
+    setState(next);
+  };
+
+  const clearGod = (slot: number) => {
+    const next = clearPantheonSlot(stateRef.current, slot);
     if (!next) return;
     playSound('click', stateRef.current.soundOn);
     setState(next);
@@ -757,7 +835,7 @@ export default function App() {
       <ResourceBar state={state} onOpen={openModal} savedAt={savedAt} />
 
       <div className="layout">
-        <ClickerArea state={state} onClick={handleClick} />
+        <ClickerArea state={state} onClick={handleClick} onOpen={openModal} />
         <Shop
           state={state}
           buildings={buildingsData}
@@ -799,7 +877,15 @@ export default function App() {
         <GoldenDice x={golden.x} y={golden.y} bonus={golden.bonus} onCollect={collectGolden} />
       ) : null}
 
-      {boss ? <BossFight boss={boss} state={state} onHit={hitBoss} /> : null}
+      {boss ? (
+        <BossFight
+          boss={boss}
+          state={state}
+          onHit={hitBoss}
+          onTaunt={tauntBoss}
+          onRitual={ritualBoss}
+        />
+      ) : null}
 
       {state.pest ? <GoblinPest pest={state.pest} onHit={hitPest} raised={boss !== null} /> : null}
 
@@ -816,6 +902,23 @@ export default function App() {
 
       {modal === 'studio' ? (
         <StudioModal state={state} onBuy={buyStudio} onClose={() => setModal(null)} />
+      ) : null}
+
+      {modal === 'familiar' ? (
+        <FamiliarModal state={state} onPickAura={pickFamiliarAura} onClose={() => setModal(null)} />
+      ) : null}
+
+      {modal === 'festival' ? (
+        <FestivalModal state={state} onClaim={claimTier} onClose={() => setModal(null)} />
+      ) : null}
+
+      {modal === 'pantheon' ? (
+        <PantheonModal
+          state={state}
+          onSeat={seatGod}
+          onClear={clearGod}
+          onClose={() => setModal(null)}
+        />
       ) : null}
 
       {modal === 'prestige' ? (

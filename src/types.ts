@@ -2,7 +2,7 @@ export type ResourceType = 'players' | 'gold' | 'dice' | 'inspiration' | 'fate';
 
 export type BuyAmount = 1 | 10 | 100 | 'max';
 
-export type ModalId = 'prestige' | 'publish' | 'editora' | 'artifice' | 'minigame' | 'achievements' | 'stats' | 'settings' | 'garden' | 'studio' | 'help';
+export type ModalId = 'prestige' | 'publish' | 'editora' | 'artifice' | 'minigame' | 'achievements' | 'stats' | 'settings' | 'garden' | 'studio' | 'help' | 'familiar' | 'festival' | 'pantheon';
 
 export type Production = Record<ResourceType, number>;
 
@@ -41,6 +41,75 @@ export interface SeedData {
   reward: SeedReward;
   req: (state: GameState) => boolean;
   reqHint: string;
+}
+
+/** A familiar that grows with XP and lends one aura at a time. */
+export interface FamiliarState {
+  xp: number;
+  /** Active aura id, or null until the player picks one. */
+  aura: string | null;
+}
+
+export interface FamiliarAuraData {
+  id: string;
+  name: string;
+  icon: string;
+  desc: string;
+  /** Familiar level that unlocks this aura. */
+  unlockLevel: number;
+  /** Resource boosted while the aura is active. */
+  resource: ResourceType;
+  /** Fractional bonus at the unlock level. */
+  base: number;
+  /** Extra fraction per familiar level above the unlock level. */
+  perLevel: number;
+}
+
+/** A god seated in the Pantheon: one strong buff and one real drawback. */
+export interface GodData {
+  id: string;
+  name: string;
+  title: string;
+  icon: string;
+  desc: string;
+  buff: string;
+  debuff: string;
+  /** Multipliers over production; values below 1 are drawbacks. */
+  production: Partial<Record<ResourceType, number>>;
+  /** Multiplier over click power when the god is seated. */
+  clickMult?: number;
+  req: (state: GameState) => boolean;
+  reqHint: string;
+}
+
+/** The festival of one real-world month. */
+export interface FestivalData {
+  /** 0 = January. */
+  month: number;
+  name: string;
+  icon: string;
+  flavor: string;
+  desc: string;
+  production: Partial<Record<ResourceType, number>>;
+  clickMult?: number;
+  /** Multiplier over golden-dice frequency. */
+  goldenMult?: number;
+}
+
+export interface FestivalTierData {
+  id: string;
+  name: string;
+  icon: string;
+  points: number;
+  desc: string;
+}
+
+export interface FestivalState {
+  /** YYYY-MM of the month these points belong to. */
+  month: string;
+  points: number;
+  /** Ids of the tiers already claimed this month. */
+  claimed: string[];
 }
 
 export interface DieData {
@@ -106,6 +175,12 @@ export interface GameState {
   equippedDie: string | null;
   /** Permanent Estúdio de Ideias levels, bought with inspiration. */
   studioLevels: Record<string, number>;
+  /** Companion that earns XP and lends an aura; permanent. */
+  familiar: FamiliarState;
+  /** This month's festival progress; resets when the real month changes. */
+  festival: FestivalState;
+  /** Two god slots; each god multiplies some resources and cuts others. */
+  pantheon: (string | null)[];
   soundOn: boolean;
 }
 
@@ -205,11 +280,15 @@ export interface SynergyData {
   bonus: number;
 }
 
+export type BossAffix = 'armored' | 'regenerating' | 'swift';
+
 export interface BossTemplate {
   id: string;
   name: string;
   icon: string;
   flavor: string;
+  /** Extra rule that makes this table harder. */
+  affix: BossAffix;
 }
 
 /** A running Mesa ao Vivo encounter. */
@@ -219,6 +298,16 @@ export interface BossEncounter extends BossTemplate {
   maxHp: number;
   timeLeft: number;
   combo: number;
+  /** 1, 2 or 3; the table gets a new trick at each phase. */
+  phase: number;
+  /** Absorbs damage and forces a Provocar before the table opens up. */
+  shield: number;
+  /** Stacks from Provocar; each one makes the next hits hurt more. */
+  focus: number;
+  /** One Ritual do Mestre is allowed per phase. */
+  ritualReady: boolean;
+  /** Short lines shown under the table. */
+  log: string[];
 }
 
 /** A goblin pest stuck to the tavern, draining players until it is clicked away. */

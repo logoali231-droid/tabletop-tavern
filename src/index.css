@@ -1958,3 +1958,324 @@ h1, h2, h3, h4 { font-family: 'Cinzel', serif; letter-spacing: 0.3px; }
 @media (max-width: 640px) {
   .pest-wrap.raised { bottom: 236px; }
 }
+
+/* ---------- familiar, festival e panteão ---------- */
+.world-strip {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  z-index: 1;
+}
+
+.world-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  background: #241810;
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.world-chip:hover {
+  background: var(--btn-hover);
+  border-color: var(--border-color);
+}
+
+.world-chip .game-icon { width: 15px; height: 15px; }
+.world-chip-label { color: var(--text-dim); }
+.world-chip-value { color: var(--gold); font-weight: 700; }
+
+.familiar-hero {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #33241a, #221610);
+}
+
+.familiar-portrait {
+  width: 48px;
+  height: 48px;
+  padding: 8px;
+  border-radius: 12px;
+  background: #2a1e12;
+  border: 1px solid var(--border-soft);
+  flex: none;
+}
+
+.familiar-hero-text { flex: 1; min-width: 0; }
+.familiar-kicker {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.familiar-hero h3 { font-size: 1.02rem; color: var(--text-highlight); }
+
+.familiar-bar {
+  height: 10px;
+  margin: 6px 0 4px;
+  border: 1px solid var(--border-soft);
+  border-radius: 99px;
+  background: #241810;
+  overflow: hidden;
+}
+.familiar-bar-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #9b5de5, #e9c46a);
+  transition: width 0.25s ease;
+}
+.familiar-xp { font-size: 0.7rem; color: var(--text-dim); }
+
+.familiar-stats { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.familiar-stats .garden-stat { flex: 1; min-width: 120px; }
+
+.familiar-auras {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.familiar-aura {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: #241810;
+}
+.familiar-aura.active { border-color: var(--success); }
+.familiar-aura.locked { opacity: 0.55; }
+.familiar-aura-head { display: flex; align-items: center; gap: 8px; }
+.familiar-aura-head h4 { font-size: 0.86rem; }
+.familiar-aura-level { font-size: 0.66rem; color: var(--text-dim); }
+.familiar-aura .blessing-desc { flex: 1; margin: 0; font-size: 0.74rem; line-height: 1.4; color: var(--text-dim); }
+.familiar-aura-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.familiar-aura-bonus { font-size: 0.74rem; font-weight: 700; color: var(--gold); }
+
+.familiar-sources { display: flex; flex-wrap: wrap; gap: 6px; }
+.familiar-source {
+  font-size: 0.64rem;
+  padding: 3px 8px;
+  border: 1px solid var(--border-soft);
+  border-radius: 99px;
+  color: var(--text-dim);
+}
+
+.festival-hero { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.festival-icon {
+  width: 52px;
+  height: 52px;
+  padding: 9px;
+  border-radius: 12px;
+  background: #2a1e12;
+  border: 1px solid var(--border-soft);
+  flex: none;
+}
+.festival-hero h3 { font-size: 1.05rem; color: var(--text-highlight); }
+.festival-flavor { margin-top: 3px; font-size: 0.74rem; line-height: 1.4; color: var(--text-dim); }
+
+.festival-bonus-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.festival-bonus {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 4px 9px;
+  border: 1px solid rgba(233, 196, 106, 0.45);
+  border-radius: 99px;
+  background: rgba(233, 196, 106, 0.12);
+  color: var(--gold);
+}
+.festival-bonus.negative {
+  border-color: rgba(231, 111, 81, 0.5);
+  background: rgba(231, 111, 81, 0.12);
+  color: var(--danger);
+}
+
+.festival-progress-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 5px;
+  font-size: 0.76rem;
+}
+.festival-bar { margin-bottom: 10px; }
+.festival-hint { margin: 8px 0 12px; font-size: 0.7rem; line-height: 1.45; color: var(--text-dim); }
+
+.festival-tiers { display: flex; flex-direction: column; gap: 8px; }
+.festival-tier {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: #241810;
+}
+.festival-tier.ready { border-color: rgba(233, 196, 106, 0.6); }
+.festival-tier.claimed { opacity: 0.6; }
+.festival-tier-text { flex: 1; min-width: 0; }
+.festival-tier-text h4 { font-size: 0.85rem; }
+.festival-tier-points { font-size: 0.66rem; color: var(--text-dim); }
+.festival-tier .btn { flex: none; }
+
+.pantheon-slots { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.pantheon-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 1px dashed var(--border-soft);
+  border-radius: 10px;
+  background: #241810;
+}
+.pantheon-slot.filled { border-style: solid; border-color: rgba(155, 93, 229, 0.55); }
+.pantheon-slot-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.pantheon-slot-god { display: flex; align-items: center; gap: 8px; }
+.pantheon-slot-god h4 { font-size: 0.86rem; color: var(--text-highlight); }
+.pantheon-title { font-size: 0.64rem; color: var(--text-dim); }
+.pantheon-empty { font-size: 0.7rem; line-height: 1.4; color: var(--text-dim); }
+.pantheon-effects { display: flex; flex-direction: column; gap: 3px; font-size: 0.7rem; }
+.pantheon-buff { color: var(--success); }
+.pantheon-debuff { color: var(--danger); }
+
+.pantheon-summary {
+  margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: #1f150e;
+}
+.pantheon-summary-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.pantheon-bonus-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+
+.pantheon-gods { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+.pantheon-god {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: #241810;
+}
+.pantheon-god.locked { opacity: 0.55; }
+.pantheon-god-head { display: flex; align-items: center; gap: 8px; }
+.pantheon-god-head h4 { font-size: 0.88rem; }
+.pantheon-god .blessing-desc { flex: 1; font-size: 0.72rem; line-height: 1.4; color: var(--text-dim); }
+.pantheon-god-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.pantheon-god-actions .btn { flex: 1; }
+
+.boss-card { width: min(352px, calc(100vw - 32px)); }
+.boss-phase-pip {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: var(--danger);
+  vertical-align: middle;
+}
+.boss-affix {
+  display: inline-block;
+  margin-top: 2px;
+  padding: 2px 7px;
+  border: 1px solid rgba(231, 111, 81, 0.5);
+  border-radius: 99px;
+  font-size: 0.62rem;
+  color: var(--danger);
+}
+.boss-shield {
+  position: relative;
+  height: 8px;
+  margin-top: 4px;
+  border: 1px solid rgba(155, 93, 229, 0.5);
+  border-radius: 99px;
+  background: #241810;
+  overflow: hidden;
+}
+.boss-shield-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #9b5de5, #c9a2ff);
+  transition: width 0.15s ease;
+}
+.boss-shield-label {
+  position: absolute;
+  inset: 0;
+  font-size: 0.52rem;
+  font-weight: 700;
+  line-height: 8px;
+  letter-spacing: 0.05em;
+  text-align: center;
+  text-transform: uppercase;
+  color: #efe4ff;
+}
+.boss-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+.boss-chip {
+  padding: 2px 7px;
+  border: 1px solid var(--border-soft);
+  border-radius: 99px;
+  background: #2b1c13;
+  font-size: 0.6rem;
+  color: var(--text-dim);
+}
+.boss-chip.focus { border-color: rgba(233, 196, 106, 0.5); color: var(--gold); }
+.boss-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.boss-actions .btn { padding: 7px 6px; font-size: 0.68rem; }
+.boss-actions .boss-hit { grid-column: 1 / -1; }
+.boss-log {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 8px;
+  font-size: 0.62rem;
+  line-height: 1.35;
+  color: var(--text-dim);
+}
+
+@media (max-width: 600px) {
+  .pantheon-slots { grid-template-columns: 1fr; }
+  .festival-tier { flex-wrap: wrap; }
+  .festival-tier .btn { width: 100%; }
+}
+
+.section-title {
+  margin: 4px 0 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.muted { color: var(--text-dim); font-size: 0.72rem; }
+.locked-hint { font-size: 0.7rem; color: var(--text-dim); }
+.boss-log-line { display: block; }

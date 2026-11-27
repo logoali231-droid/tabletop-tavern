@@ -1,16 +1,27 @@
 import { MouseEvent } from 'react';
-import { GameState } from '../types';
-import { getClickValue, getProduction } from '../utils/game';
+import { GameState, ModalId } from '../types';
+import {
+  getClickValue,
+  getFamiliarProgress,
+  getFestival,
+  getPantheonBonus,
+  getProduction,
+} from '../utils/game';
 import { formatNumber, formatRate } from '../utils/format';
 
 interface Props {
   state: GameState;
   onClick: (event: MouseEvent<HTMLButtonElement>) => void;
+  onOpen: (modal: ModalId) => void;
 }
 
-export default function ClickerArea({ state, onClick }: Props) {
+export default function ClickerArea({ state, onClick, onOpen }: Props) {
   const production = getProduction(state);
   const clickValue = getClickValue(state);
+  const familiar = getFamiliarProgress(state);
+  const festival = getFestival();
+  const gods = getPantheonBonus(state).gods.length;
+  const monthShort = new Date().toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
 
   return (
     <section className="panel clicker">
@@ -38,6 +49,39 @@ export default function ClickerArea({ state, onClick }: Props) {
         <span className="tavern-button-label">Hospedar Sessão</span>
         <span className="tavern-button-sub">+{formatNumber(clickValue)} jogadores</span>
       </button>
+
+      <div className="world-strip">
+        <button
+          type="button"
+          className="world-chip"
+          onClick={() => onOpen('familiar')}
+          title="Familiar: XP e auras"
+        >
+          <img src="/icons/lute.svg" alt="" className="game-icon" />
+          <span className="world-chip-label">Familiar</span>
+          <span className="world-chip-value">Nv {familiar.level}</span>
+        </button>
+        <button
+          type="button"
+          className="world-chip"
+          onClick={() => onOpen('festival')}
+          title={festival.name}
+        >
+          <img src={festival.icon} alt="" className="game-icon" />
+          <span className="world-chip-label">Festival</span>
+          <span className="world-chip-value">{monthShort}</span>
+        </button>
+        <button
+          type="button"
+          className="world-chip"
+          onClick={() => onOpen('pantheon')}
+          title="Panteão dos Deuses: dois assentos"
+        >
+          <img src="/icons/fate.svg" alt="" className="game-icon" />
+          <span className="world-chip-label">Panteão</span>
+          <span className="world-chip-value">{gods}/2</span>
+        </button>
+      </div>
 
       <div className="clicker-meta">
         <div className="meta-item">

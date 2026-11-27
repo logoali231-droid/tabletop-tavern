@@ -1,8 +1,13 @@
 import {
   achievementsData,
+  bossAffixLabels,
   buildingsData,
   bossData,
   diceSetData,
+  familiarAurasData,
+  festivalData,
+  festivalTiersData,
+  pantheonData,
   editorialData,
   gardenHybridsData,
   gardenSeedsData,
@@ -17,10 +22,14 @@ import {
   BossEncounter,
   Boost,
   BuildingData,
+  FamiliarAuraData,
+  FestivalData,
+  FestivalTierData,
   BuyAmount,
   DieData,
   GameState,
   GardenPlot,
+  GodData,
   GoldenEffect,
   Pest,
   Production,
@@ -62,7 +71,24 @@ export const BOSS_INTERVAL_MIN = 240;
 export const BOSS_INTERVAL_MAX = 480;
 export const BOSS_DURATION = 45;
 /** How many clicks a boss takes, so it is always a short fight. */
-export const BOSS_HITS = 12;
+export const BOSS_HITS = 16;
+/** Dados que custam Provocar (quebra escudo) e o Ritual do Mestre. */
+export const BOSS_TAUNT_COST = 8;
+export const BOSS_RITUAL_COST = 35;
+/** Cada Provocar acumula foco: +30% de dano por foco, para sempre na mesa. */
+export const BOSS_FOCUS_STEP = 0.3;
+/** Escudo que o chefe Couraçado abre em cada fase, em fração do HP máximo. */
+export const BOSS_PHASE_SHIELD = 0.25;
+/** Ritual do Mestre: dano em múltiplos do ataque básico. */
+export const BOSS_RITUAL_MULT = 6;
+/** XP do familiar: nível N começa em 25·(N−1)² de XP. */
+export const FAMILIAR_XP_PER_LEVEL = 25;
+export const FAMILIAR_MAX_LEVEL = 30;
+export const FAMILIAR_XP_PER_SECOND = 0.4;
+/** Pontos de festival que o simples ato de jogar rende por segundo. */
+export const FESTIVAL_POINTS_PER_SECOND = 0.4;
+/** Assentos fixos do Panteão. */
+export const PANTHEON_SLOTS = 2;
 export const BOSS_MIN_PLAYERS = 5000;
 export const BOSS_COMBO_STEP = 0.08;
 /** Upper bound for one "Max" purchase, so the loop stays cheap. */
@@ -142,6 +168,9 @@ export function createInitialState(): GameState {
     diceSet: ['d4'],
     equippedDie: 'd4',
     studioLevels: {},
+    familiar: { xp: 0, aura: null },
+    festival: { month: currentMonthKey(), points: 0, claimed: [] },
+    pantheon: [null, null],
     soundOn: true,
   };
 }
@@ -222,12 +251,216 @@ export function getProdMultiplier(state: GameState): number {
     * getEditoraProdBonus(state);
 }
 
+/* ------------------------------------------------------------------ */
+/* Familiar, festivais e Panteão                                       */
+/* ------------------------------------------------------------------ */
+
+/** Familiar level: 1 at 0 XP, one more level every 25·(N−1)² XP. */
+export function getFamiliarLevel(xp: number): number {
+  const safe = Math.max(0, Number.isFinite(xp) ? xp : 0);
+  return Math.min(FAMILIAR_MAX_LEVEL, 1 + Math.floor(Math.sqrt(safe / FAMILIAR_XP_PER_LEVEL)));
+}
+
+/** Total XP needed to reach the given level. */
+export function getFamiliarLevelXp(level: number): number {
+  const clamped = Math.max(1, Math.min(FAMILIAR_MAX_LEVEL, level));
+  return FAMILIAR_XP_PER_LEVEL * (clamped - 1) ** 2;
+}
+
+export function getFamiliarProgress(state: GameState): {
+  level: number;
+  xp: number;
+  intoLevel: number;
+  needed: number;
+  percent: number;
+  maxed: boolean;
+} {
+  const xp = Math.max(0, state.familiar?.xp ?? 0);
+  const level = getFamiliarLevel(xp);
+  const maxed = level >= FAMILIAR_MAX_LEVEL;
+  const start = getFamiliarLevelXp(level);
+  const end = getFamiliarLevelXp(level + 1);
+  const needed = maxed ? 0 : Math.max(1, end - start);
+  const intoLevel = maxed ? needed : xp - start;
+  return {
+    level,
+    xp,
+    intoLevel,
+    needed,
+    percent: maxed ? 100 : Math.min(100, (intoLevel / needed) * 100),
+    maxed,
+  };
+}
+
+export function getFamiliarAura(state: GameState): FamiliarAuraData | null {
+  const id = state.familiar?.aura;
+  if (!id) return null;
+  const aura = familiarAurasData.find((entry) => entry.id === id) ?? null;
+  if (!aura || getFamiliarLevel(state.familiar.xp) < aura.unlockLevel) return null;
+  return aura;
+}
+
+/** Active aura bonus, or null when no aura is chosen. */
+export function getFamiliarBonus(state: GameState): { resource: ResourceType; mult: number } | null {
+  const aura = getFamiliarAura(state);
+  if (!aura) return null;
+  const level = getFamiliarLevel(state.familiar.xp);
+  const above = Math.max(0, level - aura.unlockLevel);
+  return { resource: aura.resource, mult: 1 + aura.base + aura.perLevel * above };
+}
+
+export function addFamiliarXp(state: GameState, amount: number): GameState {
+  if (!Number.isFinite(amount) || amount <= 0) return state;
+  return { ...state, familiar: { ...state.familiar, xp: state.familiar.xp + amount } };
+}
+
+export function setFamiliarAura(state: GameState, auraId: string | null): GameState | null {
+  if (auraId === null) return { ...state, familiar: { ...state.familiar, aura: null } };
+  const aura = familiarAurasData.find((entry) => entry.id === auraId);
+  if (!aura) return null;
+  if (getFamiliarLevel(state.familiar.xp) < aura.unlockLevel) return null;
+  return { ...state, familiar: { ...state.familiar, aura: auraId } };
+}
+
+/** YYYY-MM key for the real-world month, used to roll the festival over. */
+export function currentMonthKey(now = new Date()): string {
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+export function getFestival(now = new Date()): FestivalData {
+  return festivalData[now.getMonth()] ?? festivalData[0];
+}
+
+/** This month's festival progress, ignoring points from a previous month. */
+export function getFestivalProgress(state: GameState, now = new Date()): { points: number; claimed: string[] } {
+  const month = currentMonthKey(now);
+  if (state.festival?.month !== month) return { points: 0, claimed: [] };
+  return { points: state.festival.points, claimed: state.festival.claimed };
+}
+
+export function addFestivalPoints(state: GameState, amount: number, now = new Date()): GameState {
+  if (!Number.isFinite(amount) || amount <= 0) return state;
+  const month = currentMonthKey(now);
+  const fresh = state.festival?.month === month
+    ? state.festival
+    : { month, points: 0, claimed: [] as string[] };
+  return { ...state, festival: { ...fresh, points: fresh.points + amount } };
+}
+
+export function getPantheonGod(state: GameState, slot: number): GodData | null {
+  const id = state.pantheon?.[slot];
+  if (!id) return null;
+  return pantheonData.find((god) => god.id === id) ?? null;
+}
+
+/** Combined production and click multipliers of both seated gods. */
+export function getPantheonBonus(state: GameState): {
+  production: Partial<Record<ResourceType, number>>;
+  clickMult: number;
+  gods: GodData[];
+} {
+  const production: Partial<Record<ResourceType, number>> = {};
+  let clickMult = 1;
+  const gods: GodData[] = [];
+  for (let slot = 0; slot < PANTHEON_SLOTS; slot += 1) {
+    const god = getPantheonGod(state, slot);
+    if (!god) continue;
+    gods.push(god);
+    for (const [resource, mult] of Object.entries(god.production)) {
+      const key = resource as ResourceType;
+      production[key] = (production[key] ?? 1) * (mult ?? 1);
+    }
+    clickMult *= god.clickMult ?? 1;
+  }
+  return { production, clickMult, gods };
+}
+
+export function trySeatGod(state: GameState, godId: string, slot: number): GameState | null {
+  if (slot < 0 || slot >= PANTHEON_SLOTS) return null;
+  const god = pantheonData.find((entry) => entry.id === godId);
+  if (!god || !god.req(state)) return null;
+  // O mesmo deus não pode ocupar os dois assentos.
+  const pantheon = [...state.pantheon];
+  for (let index = 0; index < PANTHEON_SLOTS; index += 1) {
+    if (pantheon[index] === godId) pantheon[index] = null;
+  }
+  pantheon[slot] = godId;
+  return { ...state, pantheon };
+}
+
+export function clearPantheonSlot(state: GameState, slot: number): GameState | null {
+  if (slot < 0 || slot >= PANTHEON_SLOTS) return null;
+  const pantheon = [...state.pantheon];
+  if (!pantheon[slot]) return null;
+  pantheon[slot] = null;
+  return { ...state, pantheon };
+}
+
+/** Claims one festival tier with this month's points. */
+export function claimFestivalTier(
+  state: GameState,
+  tierId: string,
+  now = new Date(),
+): { state: GameState; message: string } | null {
+  const tier = festivalTiersData.find((entry) => entry.id === tierId);
+  if (!tier) return null;
+  const progress = getFestivalProgress(state, now);
+  if (progress.claimed.includes(tier.id) || progress.points < tier.points) return null;
+
+  const next: GameState = {
+    ...state,
+    festival: {
+      month: currentMonthKey(now),
+      points: progress.points,
+      claimed: [...progress.claimed, tier.id],
+    },
+  };
+
+  if (tier.id === 'brinde') {
+    const players = Math.max(getProduction(state).players * 480, 5000);
+    addResource(next, 'players', players);
+    addResource(next, 'dice', 300);
+    return { state: applyAchievements(next), message: `Brinde: ${formatNumber(players)} jogadores e 300 dados.` };
+  }
+  if (tier.id === 'banquete') {
+    const boosted = applyBoost(next, {
+      id: 'festivalBanquete',
+      name: 'Banquete do Festival',
+      desc: 'Produção x4',
+      prodMult: 4,
+      clickMult: 1,
+      timeLeft: 120,
+    });
+    addResource(boosted, 'fate', 2);
+    return { state: applyAchievements(boosted), message: 'Banquete: produção x4 por 2 minutos e +2 Destino.' };
+  }
+
+  next.artificerDice += 1;
+  addResource(next, 'fate', 5);
+  return { state: applyAchievements(next), message: 'Coroa: +1 Dado de Artífice e +5 Destino.' };
+}
+
+/** Tier status for the festival panel. */
+export function getFestivalTierStatus(
+  state: GameState,
+  now = new Date(),
+): { tier: FestivalTierData; claimed: boolean; ready: boolean }[] {
+  const progress = getFestivalProgress(state, now);
+  return festivalTiersData.map((tier) => ({
+    tier,
+    claimed: progress.claimed.includes(tier.id),
+    ready: progress.points >= tier.points && !progress.claimed.includes(tier.id),
+  }));
+}
+
 export function getClickMultiplier(state: GameState): number {
   return state.clickMultiplier
     * state.globalMultiplier
     * getCampaignBonus(state)
     * getFameBonus(state)
-    * getBoostClick(state);
+    * getBoostClick(state)
+    * getPantheonBonus(state).clickMult
+    * (getFestival().clickMult ?? 1);
 }
 
 /** Adds a boost, or refreshes the timer when the same one is already running. */
@@ -269,6 +502,12 @@ export function getProduction(state: GameState): Production {
   total.gold *= getEditoraGoldBonus(state);
   total.dice *= getEditoraDiceBonus(state);
   total.inspiration *= getStudioInspiration(state) * getGardenIdeasPenalty(state);
+  const pantheon = getPantheonBonus(state).production;
+  for (const resource of RESOURCE_IDS) total[resource] *= pantheon[resource] ?? 1;
+  const festival = getFestival();
+  for (const resource of RESOURCE_IDS) total[resource] *= festival.production[resource] ?? 1;
+  const aura = getFamiliarBonus(state);
+  if (aura) total[aura.resource] *= aura.mult;
   // Destino passivo é limitado para o reset continuar valendo a pena.
   total.fate = Math.min(total.fate, getFateYieldCap(state));
   return total;
@@ -452,6 +691,9 @@ export function prestigeReset(state: GameState): GameState {
     diceSet: [...state.diceSet],
     equippedDie: state.equippedDie,
     studioLevels: { ...state.studioLevels },
+    familiar: { ...state.familiar },
+    festival: { month: state.festival.month, points: state.festival.points, claimed: [...state.festival.claimed] },
+    pantheon: [...state.pantheon],
     goldenDiceCollected: state.goldenDiceCollected,
     diceRolls: state.diceRolls,
     plotsHarvested: state.plotsHarvested,
@@ -511,6 +753,9 @@ export function publishReset(state: GameState): GameState {
     diceSet: [...state.diceSet],
     equippedDie: state.equippedDie,
     studioLevels: { ...state.studioLevels },
+    familiar: { ...state.familiar },
+    festival: { month: state.festival.month, points: state.festival.points, claimed: [...state.festival.claimed] },
+    pantheon: [...state.pantheon],
     hybridSeeds: [...state.hybridSeeds],
     goldenDiceCollected: state.goldenDiceCollected,
     diceRolls: state.diceRolls,
@@ -682,7 +927,7 @@ export function getGoldenDelayMult(state: GameState): number {
   let mult = 1;
   if (state.upgradesBought.includes('radiantDice')) mult *= 0.5;
   if (hasBlessing(state, 'luckOfTavern')) mult *= 0.5;
-  return mult / getEquippedDie(state).goldenMult / getStudioGolden(state);
+  return mult / getEquippedDie(state).goldenMult / getStudioGolden(state) / (getFestival().goldenMult ?? 1);
 }
 
 export function getStormCount(state: GameState, base: number): number {
@@ -1072,6 +1317,37 @@ function gardenRecord(value: unknown): (GardenPlot | null)[] {
  * Turns any parsed save (current, legacy or hand-edited) into a complete,
  * crash-free state. Returns null when the payload is not a save at all.
  */
+function normalizeFamiliar(raw: unknown): { xp: number; aura: string | null } {
+  const parsed = (raw ?? {}) as { xp?: unknown; aura?: unknown };
+  const aura = typeof parsed.aura === 'string' && familiarAurasData.some((entry) => entry.id === parsed.aura)
+    ? parsed.aura
+    : null;
+  return { xp: Math.max(0, finite(parsed.xp)), aura };
+}
+
+function normalizeFestival(raw: unknown): { month: string; points: number; claimed: string[] } {
+  const month = currentMonthKey();
+  const parsed = (raw ?? {}) as { month?: unknown; points?: unknown; claimed?: unknown };
+  if (parsed.month !== month) return { month, points: 0, claimed: [] };
+  return {
+    month,
+    points: Math.max(0, finite(parsed.points)),
+    claimed: stringArray(parsed.claimed).filter((id) => festivalTiersData.some((tier) => tier.id === id)),
+  };
+}
+
+function normalizePantheon(raw: unknown): (string | null)[] {
+  const slots: (string | null)[] = [null, null];
+  if (!Array.isArray(raw)) return slots;
+  for (let index = 0; index < PANTHEON_SLOTS; index += 1) {
+    const id = raw[index];
+    if (typeof id === 'string' && pantheonData.some((god) => god.id === id) && !slots.includes(id)) {
+      slots[index] = id;
+    }
+  }
+  return slots;
+}
+
 export function normalizeSave(raw: unknown): GameState | null {
   if (!raw || typeof raw !== 'object') return null;
   const parsed = raw as Partial<GameState> & Record<string, unknown>;
@@ -1123,6 +1399,9 @@ export function normalizeSave(raw: unknown): GameState | null {
     diceSet,
     equippedDie,
     studioLevels: countRecord(parsed.studioLevels),
+    familiar: normalizeFamiliar(parsed.familiar),
+    festival: normalizeFestival(parsed.festival),
+    pantheon: normalizePantheon(parsed.pantheon),
     soundOn: parsed.soundOn !== false,
   };
 
@@ -1216,32 +1495,150 @@ export function nextBossDelay(random: () => number = Math.random): number {
   return (BOSS_INTERVAL_MIN + random() * (BOSS_INTERVAL_MAX - BOSS_INTERVAL_MIN)) * 1000;
 }
 
+export function bossPhaseFor(boss: BossEncounter): number {
+  const percent = boss.hp / boss.maxHp;
+  if (percent <= 0.33) return 3;
+  if (percent <= 0.66) return 2;
+  return 1;
+}
+
+/** Couraçados abrem cada fase com um escudo de 25% do HP máximo. */
+export function bossShieldFor(boss: BossEncounter): number {
+  return boss.affix === 'armored' ? Math.round(boss.maxHp * BOSS_PHASE_SHIELD) : 0;
+}
+
+function appendBossLog(log: string[], line: string): string[] {
+  return [...log, line].slice(-3);
+}
+
+function advanceBossPhase(boss: BossEncounter): BossEncounter {
+  const phase = bossPhaseFor(boss);
+  if (phase <= boss.phase) return boss;
+  let next: BossEncounter = {
+    ...boss,
+    phase,
+    ritualReady: true,
+    log: appendBossLog(boss.log, `Fase ${phase}: a mesa muda de ritmo.`),
+  };
+  if (boss.affix === 'armored') {
+    next = {
+      ...next,
+      shield: bossShieldFor(boss),
+      log: appendBossLog(next.log, 'Escudo novo na mesa. Provocar abre a guarda.'),
+    };
+  }
+  return next;
+}
+
 export function createBoss(state: GameState, random: () => number = Math.random): BossEncounter {
   const template = bossData[Math.floor(random() * bossData.length)];
   const maxHp = getBossDamage(state) * BOSS_HITS;
-  return {
+  const boss: BossEncounter = {
     ...template,
     key: `${template.id}-${Date.now()}`,
     hp: maxHp,
     maxHp,
     timeLeft: BOSS_DURATION + (hasEditorialUpgrade(state, 'serialized') ? 15 : 0),
     combo: 0,
+    phase: 1,
+    shield: 0,
+    focus: 0,
+    ritualReady: true,
+    log: [`${template.name} senta à mesa. ${bossAffixLabels[template.affix].name}: ${bossAffixLabels[template.affix].desc}`],
   };
+  return { ...boss, shield: bossShieldFor(boss) };
 }
 
+/** Basic attack: combo and Provocar focus both scale the damage. */
 export function bossHitDamage(state: GameState, boss: BossEncounter): number {
-  return Math.round(getBossDamage(state) * (1 + boss.combo * BOSS_COMBO_STEP));
+  const combo = 1 + boss.combo * BOSS_COMBO_STEP;
+  const focus = 1 + boss.focus * BOSS_FOCUS_STEP;
+  return Math.round(getBossDamage(state) * combo * focus);
 }
 
-/** Three minutes of production, 2 Destino and a trophy boost for winning. */
-export function applyBossVictory(state: GameState): { state: GameState; gains: Production } {
+/** One free attack. The shield eats the whole hit until it breaks. */
+export function bossAttack(state: GameState, boss: BossEncounter): BossEncounter {
+  const damage = bossHitDamage(state, boss);
+  let next: BossEncounter = { ...boss, combo: boss.combo + 1 };
+  if (next.shield > 0) {
+    const absorbed = Math.min(next.shield, damage);
+    next = {
+      ...next,
+      shield: next.shield - absorbed,
+      log: appendBossLog(next.log, `Escudo absorve ${formatNumber(absorbed)}.`),
+    };
+  } else {
+    next = {
+      ...next,
+      hp: Math.max(0, next.hp - damage),
+      log: appendBossLog(next.log, `${formatNumber(damage)} de dano na mesa.`),
+    };
+  }
+  return advanceBossPhase(next);
+}
+
+/** Provocar: paga dados, quebra o escudo, soma foco e zera o combo. */
+export function bossTaunt(state: GameState, boss: BossEncounter): { state: GameState; boss: BossEncounter } | null {
+  if (state.dice < BOSS_TAUNT_COST) return null;
+  const nextState: GameState = { ...state, dice: state.dice - BOSS_TAUNT_COST };
+  const nextBoss: BossEncounter = {
+    ...boss,
+    shield: 0,
+    focus: boss.focus + 1,
+    combo: 0,
+    log: appendBossLog(
+      boss.log,
+      boss.shield > 0 ? 'Escudo quebrado! Foco +1.' : 'A mesa perde a paciência. Foco +1.',
+    ),
+  };
+  return { state: nextState, boss: nextBoss };
+}
+
+/** Ritual do Mestre: 35 dados, dano massivo que ignora escudo, uma vez por fase. */
+export function bossRitual(state: GameState, boss: BossEncounter): { state: GameState; boss: BossEncounter } | null {
+  if (!boss.ritualReady || state.dice < BOSS_RITUAL_COST) return null;
+  const damage = Math.round(
+    getBossDamage(state) * BOSS_RITUAL_MULT * (1 + boss.focus * BOSS_FOCUS_STEP),
+  );
+  const nextState: GameState = { ...state, dice: state.dice - BOSS_RITUAL_COST };
+  const nextBoss: BossEncounter = {
+    ...boss,
+    hp: Math.max(0, boss.hp - damage),
+    ritualReady: false,
+    log: appendBossLog(boss.log, `Ritual do Mestre: ${formatNumber(damage)} de dano, escudo ignorado.`),
+  };
+  return { state: nextState, boss: advanceBossPhase(nextBoss) };
+}
+
+/**
+ * Advances the fight clock. Affixes and phase 3 make the clock run faster and
+ * Regenerador heals over time, so the table keeps pressure until the end.
+ */
+export function bossTick(
+  state: GameState,
+  boss: BossEncounter,
+  dt: number,
+): { boss: BossEncounter; expired: boolean } {
+  void state;
+  const speed = (boss.affix === 'swift' ? 1.3 : 1) * (boss.phase >= 3 ? 1.25 : 1);
+  let next: BossEncounter = { ...boss, timeLeft: boss.timeLeft - dt * speed };
+  if (next.affix === 'regenerating' && next.hp > 0) {
+    next = { ...next, hp: Math.min(next.maxHp, next.hp + next.maxHp * 0.01 * dt) };
+  }
+  next = advanceBossPhase(next);
+  return { boss: next, expired: next.timeLeft <= 0 };
+}
+
+/** Production reward, 2–3 Destino and a trophy boost; faster wins pay more. */
+export function applyBossVictory(state: GameState, boss?: BossEncounter): { state: GameState; gains: Production } {
   const production = getProduction(state);
+  const speedBonus = boss ? 1 + Math.max(0, boss.timeLeft / BOSS_DURATION) * 0.5 : 1;
   const gains: Production = {
-    players: Math.max(production.players * 180, 0),
-    gold: Math.max(production.gold * 180, 0),
-    dice: Math.max(60, production.dice * 180),
-    inspiration: Math.max(25, production.inspiration * 180),
-    fate: getEditoraBossFate(state),
+    players: Math.max(production.players * 180 * speedBonus, 0),
+    gold: Math.max(production.gold * 180 * speedBonus, 0),
+    dice: Math.max(60, production.dice * 180 * speedBonus),
+    inspiration: Math.max(25, production.inspiration * 180 * speedBonus),
+    fate: getEditoraBossFate(state) + (boss && boss.timeLeft > BOSS_DURATION * 0.5 ? 1 : 0),
   };
 
   const next: GameState = { ...state, bossesDefeated: state.bossesDefeated + 1 };

@@ -94,6 +94,7 @@ export const helpSections: HelpSection[] = [
       { label: 'Custo', text: 'A rolagem custa dados (10 no início, subindo com o total de dados ganhos na vida). Vantagem rola dois d20 e usa o melhor, custando 2,5x.' },
       { label: 'Resultados', text: '1 falha crítica (nada), 2–10 ouro, 11–15 inspiração, 16–19 produção x3 por 20s, 20 crítico: produção x5 por 30s, +1 Destino e inspiração.' },
       { label: 'Conjuntos de dados', text: 'Seis dados colecionáveis: d4, d6, d8, d10, d12 e d20. Só um fica equipado; dados pequenos dão mais críticos e mais dados dourados, dados grandes dão cliques mais fortes.' },
+      { label: 'Desbloqueio por prestígio', text: 'Só o d4 vem de graça. Cada dado novo é liberado por campanhas concluídas: d6 com 1, d8 com 2, d10 com 3, d12 com 5 e d20 com 8. O painel mostra a dica de cada um; o que já foi desbloqueado nunca é perdido, nem ao publicar.' },
     ],
   },
   {
@@ -203,9 +204,45 @@ export const helpSections: HelpSection[] = [
     icon: '/icons/dice.svg',
     items: [
       { label: 'Como aparecem', text: 'Depois dos primeiros jogadores, um chefe surge a cada 4–8 minutos e fica 45 segundos. Fechar um painel ou abrir o tutorial pausa o relógio.' },
-      { label: 'Como vencer', text: 'Cada Atacar causa dano igual a 10x o seu clique, com combo crescente de 8% por golpe. São cerca de 12 golpes para derrubar.' },
-      { label: 'Recompensa', text: 'Vitória rende 3 minutos de produção de jogadores, ouro, dados e inspiração, +2 Destino e o Troféu da Mesa (produção x3 por 30s). Se o tempo acabar, o chefe vai embora sem prêmio.' },
+      { label: 'Fases e escudo', text: 'A mesa tem três fases (100%, 66% e 33% do HP). Chefes Couraçados abrem cada fase com um escudo de 25% do HP: Atacar só gasta o escudo, então Provocar resolve.' },
+      { label: 'Provocar e foco', text: 'Provocar custa 8 dados, quebra o escudo, zera o combo e soma 1 Foco. Cada Foco dá +30% de dano pelo resto da mesa — trocar combo por foco é a decisão central da luta.' },
+      { label: 'Ritual do Mestre', text: 'Uma vez por fase, 35 dados compram um Ritual que causa 6x o ataque básico e ignora o escudo. Guarde dados para a fase 3.' },
+      { label: 'Afinidades', text: 'Cada chefe tem uma regra extra: Couraçado (escudo em cada fase), Regenerador (recupera 1% do HP por segundo) ou Acelerado (relógio 30% mais rápido; a fase 3 acelera mais 25%).' },
+      { label: 'Recompensa', text: 'Vitória rende 3 minutos de produção de jogadores, ouro, dados e inspiração vezes um bônus pela pressa (até +50%), +2 Destino (+1 se vencer na metade do tempo) e o Troféu da Mesa (produção x3 por 30s). Se o tempo acabar, o chefe vai embora sem prêmio.' },
       { label: 'Conquistas', text: 'Vença 1, 10 e 50 Mesas ao Vivo. O contador é permanente e sobrevive a resets.' },
+    ],
+  },
+  {
+    id: 'familiar',
+    title: 'Familiar: XP e auras',
+    icon: '/icons/lute.svg',
+    items: [
+      { label: 'XP sempre', text: 'Pip ganha 0,4 XP por segundo com o jogo aberto, +1 por clique, +20 por trama colhida, +120 por Mesa ao Vivo vencida, +400 por campanha e +800 por publicação. O XP nunca é perdido em resets.' },
+      { label: 'Nível', text: 'O nível sobe a cada 25·(N−1)² de XP, até o nível 30. Não há custo nem botão: o familiar cresce sozinho conforme você joga.' },
+      { label: 'Auras', text: 'São quatro e só uma fica ativa. Aura de Ideias (nível 4, inspiração), Aura de Fortuna (nível 8, ouro), Aura de Fama (nível 14, jogadores) e Aura do Destino (nível 20, Destino passivo). Trocar é de graça.' },
+      { label: 'Escala', text: 'Cada aura começa em +15% a +30% e ganha mais 1% a 3% por nível acima do desbloqueio. O painel mostra o bônus exato antes de você escolher.' },
+    ],
+  },
+  {
+    id: 'festival',
+    title: 'Festivais do mês real',
+    icon: '/icons/crown.svg',
+    items: [
+      { label: 'Um por mês', text: 'O festival segue o calendário de verdade: janeiro dá +25% jogadores, agosto dobra os cliques, dezembro dá +30% ouro e +15% jogadores, e assim por diante. A troca acontece sozinha no dia 1º.' },
+      { label: 'Pontos', text: 'Você ganha 0,4 ponto por segundo jogando, +1 por clique, +10 por colheita, +20 por Dado Dourado e +50 por Mesa ao Vivo vencida.' },
+      { label: 'Três metas', text: 'Brinde (250 pontos), Banquete (700) e Coroa (1600). Cada meta é resgatada uma vez por mês e paga recursos, bênção, Destino e até um Dado de Artífice.' },
+      { label: 'Zera no mês novo', text: 'Pontos e metas resgatadas viram no dia 1º; os prêmios já recebidos ficam com você. O painel mostra o próximo festival.' },
+    ],
+  },
+  {
+    id: 'panteao',
+    title: 'Panteão dos Deuses',
+    icon: '/icons/fate.svg',
+    items: [
+      { label: 'Dois assentos', text: 'Sete deuses, dois assentos. Todos os deuses são desbloqueados com Destino total histórico: Fortuna com 1, Chronos com 5, Mnemosine com 10, Tique com 20, Nix com 35, Ares com 50 e Dionísio com 70.' },
+      { label: 'Buff e debuff', text: 'Todo deus dá um bônus forte e corta outro recurso. Fortuna dá +50% ouro e −20% inspiração; Ares dá +70% jogadores e deixa os cliques em x0,6. Não existe deus sem preço.' },
+      { label: 'Combinação', text: 'Os dois assentos multiplicam entre si. Dois deuses de ouro somam bônus, mas também somam os cortes; o painel mostra o efeito combinado antes de confirmar.' },
+      { label: 'Permanente', text: 'Os deuses sentados sobrevivem a campanhas, publicações e importação de save. Trocar é de graça e não custa Destino.' },
     ],
   },
   {
