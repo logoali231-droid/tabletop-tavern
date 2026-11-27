@@ -83,7 +83,7 @@ import GardenModal from './components/GardenModal';
 import StudioModal from './components/StudioModal';
 import HelpModal from './components/HelpModal';
 import Tutorial from './components/Tutorial';
-import { TUTORIAL_KEY, tutorialSteps } from './data/tutorial';
+import { GARDEN_TUTORIAL_KEY, gardenTutorialSteps, TUTORIAL_KEY, tutorialSteps } from './data/tutorial';
 
 interface Particle {
   id: number;
@@ -131,6 +131,7 @@ export default function App() {
       return 0;
     }
   });
+  const [gardenStep, setGardenStep] = useState<number | null>(null);
 
   const stateRef = useRef(state);
   const particleId = useRef(0);
@@ -145,6 +146,7 @@ export default function App() {
   const nextPestAt = useRef(Date.now() + PEST_FIRST_DELAY);
   const modalRef = useRef<ModalId | null>(null);
   const tutorialRef = useRef<number | null>(null);
+  const gardenTutorialRef = useRef<number | null>(null);
 
   useEffect(() => {
     stateRef.current = state;
@@ -180,6 +182,47 @@ export default function App() {
     setTutorialStep(tutorialStep - 1);
   };
 
+  /* ---------------- guided tour of the Grimório ---------------- */
+  useEffect(() => {
+    if (gardenStep === null) return;
+    setModal('garden');
+  }, [gardenStep]);
+
+  /* Opens once on the first visit to the Grimório, never behind the main tour. */
+  useEffect(() => {
+    if (modal !== 'garden' || tutorialStep !== null || gardenStep !== null) return;
+    try {
+      if (localStorage.getItem(GARDEN_TUTORIAL_KEY) !== 'done') setGardenStep(0);
+    } catch {
+      /* storage blocked: the tour simply returns next time */
+    }
+  }, [modal, tutorialStep, gardenStep]);
+
+  const startGardenTutorial = () => setGardenStep(0);
+
+  const finishGardenTutorial = () => {
+    try {
+      localStorage.setItem(GARDEN_TUTORIAL_KEY, 'done');
+    } catch {
+      /* storage blocked: the tour simply returns on the next visit */
+    }
+    setGardenStep(null);
+  };
+
+  const gardenNext = () => {
+    if (gardenStep === null) return;
+    if (gardenStep + 1 >= gardenTutorialSteps.length) {
+      finishGardenTutorial();
+      return;
+    }
+    setGardenStep(gardenStep + 1);
+  };
+
+  const gardenPrev = () => {
+    if (gardenStep === null || gardenStep === 0) return;
+    setGardenStep(gardenStep - 1);
+  };
+
   /* ---------------- Mesas ao Vivo (bosses) ---------------- */
   useEffect(() => {
     bossRef.current = boss;
@@ -192,6 +235,10 @@ export default function App() {
   useEffect(() => {
     tutorialRef.current = tutorialStep;
   }, [tutorialStep]);
+
+  useEffect(() => {
+    gardenTutorialRef.current = gardenStep;
+  }, [gardenStep]);
 
   const resetBossClock = () => {
     bossRef.current = null;
@@ -212,7 +259,7 @@ export default function App() {
   useEffect(() => {
     const interval = window.setInterval(() => {
       // Paused while a panel or the tour is open, so no fight is wasted in the background.
-      if (modalRef.current !== null || tutorialRef.current !== null) return;
+      if (modalRef.current !== null || tutorialRef.current !== null || gardenTutorialRef.current !== null) return;
 
       const current = stateRef.current;
       const active = bossRef.current;
@@ -251,7 +298,7 @@ export default function App() {
   useEffect(() => {
     const interval = window.setInterval(() => {
       // Like the boss clock, a pest never spawns behind a panel or the tour.
-      if (modalRef.current !== null || tutorialRef.current !== null) return;
+      if (modalRef.current !== null || tutorialRef.current !== null || gardenTutorialRef.current !== null) return;
       const current = stateRef.current;
       if (current.pest || current.playersEarned < PEST_MIN_PLAYERS) return;
       if (Date.now() < nextPestAt.current) return;
@@ -762,6 +809,7 @@ export default function App() {
           onPlant={plantSeed}
           onHarvest={harvestPlot}
           onSpeed={speedPlot}
+          onTutorial={startGardenTutorial}
           onClose={() => setModal(null)}
         />
       ) : null}
@@ -828,6 +876,7 @@ export default function App() {
       {modal === 'help' ? (
         <HelpModal
           onStartTutorial={() => {
+            setGardenStep(null);
             setModal(null);
             setTutorialStep(0);
           }}
@@ -841,10 +890,22 @@ export default function App() {
 
       {tutorialStep !== null && tutorialSteps[tutorialStep] ? (
         <Tutorial
+          steps={tutorialSteps}
           step={tutorialStep}
           onNext={tutorialNext}
           onPrev={tutorialPrev}
           onClose={finishTutorial}
+        />
+      ) : null}
+
+      {gardenStep !== null && gardenTutorialSteps[gardenStep] ? (
+        <Tutorial
+          steps={gardenTutorialSteps}
+          step={gardenStep}
+          label="Grimório"
+          onNext={gardenNext}
+          onPrev={gardenPrev}
+          onClose={finishGardenTutorial}
         />
       ) : null}
 

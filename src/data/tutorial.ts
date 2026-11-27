@@ -12,6 +12,9 @@ export interface TutorialStep {
 /** localStorage flag: the tour auto-opens only until it is finished or skipped. */
 export const TUTORIAL_KEY = 'tabletop-tavern-tutorial-v1';
 
+/** Separate flag for the Grimório tour, so the two never share progress. */
+export const GARDEN_TUTORIAL_KEY = 'tabletop-tavern-garden-tutorial-v1';
+
 export const tutorialSteps: TutorialStep[] = [
   {
     title: 'Bem-vindo à Tabletop Tavern',
@@ -69,13 +72,13 @@ export const tutorialSteps: TutorialStep[] = [
     title: 'Grimório de Tramas',
     modal: 'garden',
     target: '.modal',
-    text: 'Plante tramas com inspiração e colha recursos, bônus temporários ou Destino. Tramas iguais vizinhas crescem mais rápido, e duas maduras diferentes cruzam para revelar um dos 13 híbridos.',
+    text: 'Plante tramas com inspiração e colha recursos, bônus temporários ou Destino. Cada uma tem seu tempo de crescimento, de 2 a 30 minutos. O Grimório tem um tutorial próprio, no botão Tutorial.',
   },
   {
     title: 'Estúdio de Ideias',
     modal: 'studio',
     target: '.modal',
-    text: 'Gaste inspiração em 5 manuscritos com níveis sem limite: produção global, poder de clique, inspiração, dados dourados e velocidade das tramas. Os níveis sobrevivem a todos os resets.',
+    text: 'Gaste inspiração em 5 manuscritos com níveis sem limite: produção global, poder de clique, inspiração, dados dourados e velocidade das tramas (até o dobro). Os níveis sobrevivem a todos os resets.',
   },
   {
     title: 'Prestígio',
@@ -127,5 +130,65 @@ export const tutorialSteps: TutorialStep[] = [
     title: 'Pronto para jogar',
     target: '.topbar-actions',
     text: 'Este tour fica sempre disponível no botão ? da barra superior, junto com o manual completo de cada sistema. Bom jogo!',
+  },
+];
+
+/**
+ * Tour próprio do Grimório: abre sozinho na primeira visita e volta pelo botão
+ * Tutorial dentro do painel. Os alvos ficam dentro do modal aberto.
+ */
+export const gardenTutorialSteps: TutorialStep[] = [
+  {
+    title: 'O Grimório de Tramas',
+    modal: 'garden',
+    text: 'Aqui você escreve tramas: paga inspiração, espera a página amadurecer e colhe o que ela render. Cada trama tem seu próprio tempo, de 2 a 30 minutos, então o Grimório é coisa para deixar crescendo.',
+  },
+  {
+    title: 'Plantar numa página',
+    modal: 'garden',
+    target: '.garden-grid',
+    text: 'Clique numa página vazia para plantar a trama selecionada na lista de baixo. A página mostra a barra de crescimento e o tempo que falta.',
+  },
+  {
+    title: 'Colher',
+    modal: 'garden',
+    target: '.garden-grid',
+    text: 'Quando a página fica dourada, ela amadureceu: clique para colher jogadores, ouro, dados, inspiração, bênçãos temporárias ou Destino.',
+  },
+  {
+    title: 'O preço acompanha a colheita',
+    modal: 'garden',
+    target: '.seed-palette',
+    text: 'O custo em inspiração cresce junto com a sua produção de ideias, para a colheita nunca virar troco. Se o preço parecer alto, espere a produção subir: a recompensa sobe junto.',
+  },
+  {
+    title: 'Tramas amaldiçoadas',
+    modal: 'garden',
+    target: '.seed-palette',
+    text: 'Algumas tramas têm um preço a mais: enquanto crescem, cortam a produção de ideias. O cartão mostra o corte em vermelho e a página em crescimento traz o selo MALDIÇÃO.',
+  },
+  {
+    title: 'Sinergia',
+    modal: 'garden',
+    target: '.garden-grid',
+    text: 'Duas tramas iguais em páginas vizinhas ganham sinergia: crescem 40% mais rápido e rendem 50% a mais. Repetir a mesma trama lado a lado vale a pena.',
+  },
+  {
+    title: 'Cruzamento',
+    modal: 'garden',
+    target: '.garden-grid',
+    text: 'Duas tramas diferentes e maduras lado a lado cruzam na colheita e revelam um híbrido com recompensa própria. São 13 no total e ficam para sempre.',
+  },
+  {
+    title: 'Acelerar',
+    modal: 'garden',
+    target: '.garden-grid',
+    text: 'Cinco dados adiantam 30 segundos de uma página em crescimento. O painel mostra o tempo real já com bênçãos e sinergia aplicadas.',
+  },
+  {
+    title: 'Sempre à mão',
+    modal: 'garden',
+    target: '.modal',
+    text: 'Este tutorial fica no botão Tutorial do Grimório, e o manual completo está no ? da barra superior. Bom plantio!',
   },
 ];

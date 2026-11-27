@@ -202,9 +202,9 @@ export function getStudioGolden(state: GameState): number {
   return 1 + 0.04 * getStudioLevel(state, 'sorte');
 }
 
-/** +5% trama growth speed per Roteiro Afiado level. */
+/** +5% trama growth speed per Roteiro Afiado level, capped at double speed. */
 export function getStudioGrowth(state: GameState): number {
-  return 1 + 0.05 * getStudioLevel(state, 'roteiro');
+  return 1 + Math.min(1, 0.05 * getStudioLevel(state, 'roteiro'));
 }
 
 export function studioCost(upgrade: StudioUpgradeData, level: number): number {
@@ -268,7 +268,7 @@ export function getProduction(state: GameState): Production {
   total.players *= getPestPenalty(state);
   total.gold *= getEditoraGoldBonus(state);
   total.dice *= getEditoraDiceBonus(state);
-  total.inspiration *= getStudioInspiration(state);
+  total.inspiration *= getStudioInspiration(state) * getGardenIdeasPenalty(state);
   // Destino passivo é limitado para o reset continuar valendo a pena.
   total.fate = Math.min(total.fate, getFateYieldCap(state));
   return total;
@@ -867,8 +867,36 @@ export function getPlotStatus(state: GameState, index: number, now = Date.now())
   };
 }
 
-export function getSeedCost(state: GameState, seed: SeedData): number {
-  return hasBlessing(state, 'freePages') ? Math.ceil(seed.cost / 2) : seed.cost;
+/**
+ * Cursed tramas cut Idea production while they grow, so a big harvest has a
+ * price beyond inspiration. The total is floored at 30% of the normal rate.
+ */
+export function getGardenIdeasPenalty(state: GameState, now = Date.now()): number {
+  let penalty = 1;
+  for (let index = 0; index < state.garden.length; index += 1) {
+    const status = getPlotStatus(state, index, now);
+    if (!status || status.mature) continue;
+    if (status.seed.drawback) penalty *= 1 - status.seed.drawback.inspiration;
+  }
+  return Math.max(0.3, penalty);
+}
+
+/**
+ * A trama price follows the harvest it pays: fixed costs would become pocket
+ * change once Idea production grows, so the cost is the larger of the base
+ * price and a slice of what the reward is worth in Idea-seconds.
+ */
+export function getSeedCost(state: GameState, seed: SeedData, ideasPerSecond?: number): number {
+  const reward = seed.reward;
+  const priceSeconds = reward.kind === 'resource'
+    ? reward.seconds * 0.4
+    : reward.kind === 'boost'
+      ? reward.duration * 1.2
+      : reward.amount * 30;
+  const ideas = ideasPerSecond ?? getProduction(state).inspiration;
+  const scaled = Math.ceil(ideas * priceSeconds);
+  const cost = Math.max(seed.cost, scaled);
+  return hasBlessing(state, 'freePages') ? Math.ceil(cost / 2) : cost;
 }
 
 export function tryPlantSeed(state: GameState, index: number, seedId: string): GameState | null {

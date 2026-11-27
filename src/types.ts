@@ -36,6 +36,8 @@ export interface SeedData {
   icon: string;
   cost: number;
   growSeconds: number;
+  /** Cursed tramas cut Idea production while they grow (fraction, 0–1). */
+  drawback?: { inspiration: number };
   reward: SeedReward;
   req: (state: GameState) => boolean;
   reqHint: string;

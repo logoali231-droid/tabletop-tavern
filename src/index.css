@@ -1000,6 +1000,33 @@ h1, h2, h3, h4 { font-family: 'Cinzel', serif; letter-spacing: 0.3px; }
 
 .garden-hint strong { color: var(--gold); }
 
+.garden-topline {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.garden-topline .modal-lead { flex: 1; min-width: 0; }
+
+.garden-tutorial { flex: none; }
+
+.garden-stat-value.curse { color: var(--danger); }
+
+.seed-curse {
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--danger);
+}
+
+.plot-chip.curse {
+  top: 6px;
+  bottom: auto;
+  left: 6px;
+  right: auto;
+  background: var(--danger);
+  color: #1a0b05;
+}
+
 .garden-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1921,6 +1948,11 @@ h1, h2, h3, h4 { font-family: 'Cinzel', serif; letter-spacing: 0.3px; }
 @media (max-width: 760px) {
   .artifice-summary { grid-template-columns: 1fr 1fr; }
   .pest-wrap { right: 10px; bottom: 54px; }
+}
+
+@media (max-width: 560px) {
+  .garden-topline { flex-direction: column; }
+  .garden-tutorial { align-self: flex-start; }
 }
 
 @media (max-width: 640px) {

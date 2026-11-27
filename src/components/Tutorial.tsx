@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { tutorialSteps } from '../data/tutorial';
+import { TutorialStep } from '../data/tutorial';
 
 interface Props {
+  steps: TutorialStep[];
   step: number;
+  /** Shown before the step counter, e.g. "Grimório". */
+  label?: string;
   onNext: () => void;
   onPrev: () => void;
   onClose: () => void;
@@ -15,8 +18,8 @@ interface Box {
   height: number;
 }
 
-export default function Tutorial({ step, onNext, onPrev, onClose }: Props) {
-  const current = tutorialSteps[step];
+export default function Tutorial({ steps, step, label, onNext, onPrev, onClose }: Props) {
+  const current = steps[step];
   const [box, setBox] = useState<Box | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -84,10 +87,10 @@ export default function Tutorial({ step, onNext, onPrev, onClose }: Props) {
   }, [onClose, onNext, onPrev]);
 
   if (!current) return null;
-  const last = step === tutorialSteps.length - 1;
+  const last = step === steps.length - 1;
 
   return (
-    <div className="tutorial" role="dialog" aria-label="Tutorial interativo">
+    <div className="tutorial" role="dialog" aria-label={label ? `Tutorial do ${label}` : 'Tutorial interativo'}>
       {box ? (
         <div
           className="tutorial-spot"
@@ -103,7 +106,9 @@ export default function Tutorial({ step, onNext, onPrev, onClose }: Props) {
       )}
 
       <div className={`tutorial-card${box ? '' : ' centered'}`} ref={cardRef}>
-        <span className="tutorial-step">Passo {step + 1} de {tutorialSteps.length}</span>
+        <span className="tutorial-step">
+          {label ? `${label} · ` : ''}Passo {step + 1} de {steps.length}
+        </span>
         <h3>{current.title}</h3>
         <p>{current.text}</p>
         <div className="tutorial-actions">

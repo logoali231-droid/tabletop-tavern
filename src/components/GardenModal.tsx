@@ -5,8 +5,10 @@ import {
   GARDEN_SPEEDUP_COST,
   allSeedsData,
   getCrossbreed,
+  getGardenIdeasPenalty,
   getGardenSlots,
   getPlotStatus,
+  getProduction,
   getSeedCost,
   hasBlessing,
 } from '../utils/game';
@@ -18,6 +20,7 @@ interface Props {
   onPlant: (index: number, seedId: string) => void;
   onHarvest: (index: number) => void;
   onSpeed: (index: number) => void;
+  onTutorial: () => void;
   onClose: () => void;
 }
 
@@ -29,22 +32,31 @@ const RARITY_LABEL: Record<string, string> = {
   híbrido: 'Híbrido',
 };
 
-export default function GardenModal({ state, onPlant, onHarvest, onSpeed, onClose }: Props) {
+export default function GardenModal({ state, onPlant, onHarvest, onSpeed, onTutorial, onClose }: Props) {
   const [selectedId, setSelectedId] = useState(gardenSeedsData[0].id);
   const slots = getGardenSlots(state);
   const knownSeeds = allSeedsData.filter((seed) => seed.req(state));
   const selected = knownSeeds.find((seed) => seed.id === selectedId) ?? gardenSeedsData[0];
-  const selectedCost = getSeedCost(state, selected);
+  const ideasPerSecond = getProduction(state).inspiration;
+  const selectedCost = getSeedCost(state, selected, ideasPerSecond);
+  const ideasPenalty = getGardenIdeasPenalty(state);
 
   return (
     <Modal title="Grimório de Tramas" icon="/icons/scroll.svg" size="wide" onClose={onClose}>
-      <p className="modal-lead">
-        Cada página é uma trama esperando para acontecer. Plante com <strong>inspiração</strong>,
-        espere crescer e colha recursos, bônus ou Destino.         Tramas iguais em páginas vizinhas ganham
-        <strong> sinergia</strong>: crescem 40% mais rápido e rendem 50% a mais. Tramas
-        <strong> diferentes</strong> que amadurecem lado a lado cruzam: ao colher uma delas
-        você descobre uma semente híbrida com recompensa própria.
-      </p>
+      <div className="garden-topline">
+        <p className="modal-lead">
+          Cada página é uma trama esperando para acontecer. Plante com <strong>inspiração</strong>,
+          espere crescer e colha recursos, bônus ou Destino. Cada trama tem seu tempo — de 2 a 30
+          minutos — e o preço em ideias acompanha a sua produção. Tramas iguais em páginas vizinhas
+          ganham <strong>sinergia</strong>: crescem 40% mais rápido e rendem 50% a mais. Tramas
+          <strong> diferentes</strong> que amadurecem lado a lado cruzam: ao colher uma delas você
+          descobre uma semente híbrida com recompensa própria. Algumas tramas são
+          <strong> amaldiçoadas</strong> e cortam a produção de ideias enquanto crescem.
+        </p>
+        <button type="button" className="btn btn-ghost garden-tutorial" onClick={onTutorial}>
+          Tutorial
+        </button>
+      </div>
 
       <div className="garden-stats">
         <div className="garden-stat">
@@ -69,12 +81,21 @@ export default function GardenModal({ state, onPlant, onHarvest, onSpeed, onClos
             {state.hybridSeeds.length}/{gardenHybridsData.length}
           </strong>
         </div>
+        {ideasPenalty < 1 ? (
+          <div className="garden-stat">
+            <span className="prestige-label">Ideias em queda</span>
+            <strong className="garden-stat-value curse">
+              −{Math.round((1 - ideasPenalty) * 100)}%
+            </strong>
+          </div>
+        ) : null}
       </div>
 
       <div className="garden-hint">
-        Página vazia planta <strong>{selected.name}</strong> por {selectedCost} de inspiração.
-        Página em crescimento acelera {formatTime(30)} com {GARDEN_SPEEDUP_COST} dados. Duas
-        tramas diferentes e maduras lado a lado mostram a marca <strong>cruzamento</strong>.
+        Página vazia planta <strong>{selected.name}</strong> por {selectedCost} de inspiração e
+        leva {formatTime(selected.growSeconds)} para amadurecer. Página em crescimento acelera
+        {` ${formatTime(30)} `} com {GARDEN_SPEEDUP_COST} dados. Duas tramas diferentes e maduras
+        lado a lado mostram a marca <strong>cruzamento</strong>.
         {hasBlessing(state, 'librarian') ? ' O Bibliotecário Eterno colhe tudo sozinho.' : ''}
       </div>
 
@@ -138,6 +159,11 @@ export default function GardenModal({ state, onPlant, onHarvest, onSpeed, onClos
                 {formatTime(secondsLeft)} · {GARDEN_SPEEDUP_COST} dados
               </span>
               {synergy ? <span className="plot-chip">sinergia</span> : null}
+              {seed.drawback ? (
+                <span className="plot-chip curse" title="Enquanto cresce, esta trama corta a produção de ideias">
+                  maldição
+                </span>
+              ) : null}
             </button>
           );
         })}
@@ -147,7 +173,7 @@ export default function GardenModal({ state, onPlant, onHarvest, onSpeed, onClos
       <div className="seed-palette">
         {allSeedsData.map((seed) => {
           const unlocked = seed.req(state);
-          const cost = getSeedCost(state, seed);
+          const cost = getSeedCost(state, seed, ideasPerSecond);
           return (
             <button
               key={seed.id}
@@ -165,6 +191,11 @@ export default function GardenModal({ state, onPlant, onHarvest, onSpeed, onClos
                 <span className="seed-meta">
                   {unlocked ? `${cost} inspiração · ${formatTime(seed.growSeconds)}` : seed.reqHint}
                 </span>
+                {unlocked && seed.drawback ? (
+                  <span className="seed-curse">
+                    −{Math.round(seed.drawback.inspiration * 100)}% ideias enquanto cresce
+                  </span>
+                ) : null}
                 {unlocked ? <span className="seed-desc">{seed.desc}</span> : null}
               </span>
             </button>

@@ -102,9 +102,13 @@ export const helpSections: HelpSection[] = [
     icon: '/icons/scroll.svg',
     items: [
       { label: 'Páginas', text: 'São de 4 a 9 páginas, liberadas com campanhas e bênçãos. Plantar custa inspiração; colher rende recursos, bônus ou Destino.' },
+      { label: 'Tempo de cada trama', text: 'Cada semente tem o seu ritmo: de 2 minutos (Rumor de Taverna) a 30 minutos (Lenda Eterna); híbridos ficam entre 5 e 35 minutos. Sinergia, bênçãos e Roteiro Afiado encurtam o relógio.' },
+      { label: 'Preço que acompanha', text: 'O custo em inspiração é o maior entre o preço base e uma fatia da produção de ideias por segundo. Assim a colheita nunca vira troco: quem produz mais ideias paga mais e recebe mais.' },
+      { label: 'Maldições', text: 'Mapa Rasgado, Maldição Antiga, Profecia Maldita e Maldição Eterna cortam a produção de ideias enquanto crescem (25% a 60%, somando no máximo 70%). O cartão e a página mostram o corte.' },
       { label: 'Sinergia', text: 'Duas tramas iguais em páginas vizinhas crescem 40% mais rápido e rendem 50% mais na colheita.' },
       { label: 'Acelerar', text: 'Cinco dados adiantam 30 segundos de crescimento de uma trama.' },
       { label: 'Híbridos', text: 'Duas tramas diferentes e maduras em páginas vizinhas cruzam na colheita: 12 receitas fixas e um híbrido genérico, 13 no total. Híbridos descobertos ficam para sempre.' },
+      { label: 'Tutorial próprio', text: 'Na primeira visita o Grimório abre um tour de 9 passos só dele; o botão Tutorial no topo do painel repete quando quiser, sem mexer no tour principal.' },
     ],
   },
   {
@@ -112,7 +116,7 @@ export const helpSections: HelpSection[] = [
     title: 'Estúdio de Ideias',
     icon: '/icons/inspiration.svg',
     items: [
-      { label: 'Cinco manuscritos', text: 'Rascunho Eterno (+5% produção global), Punho Criativo (+8% clique), Fluxo de Ideias (+10% inspiração), Sorte Escrita (+4% dados dourados) e Roteiro Afiado (+5% velocidade de trama).' },
+      { label: 'Cinco manuscritos', text: 'Rascunho Eterno (+5% produção global), Punho Criativo (+8% clique), Fluxo de Ideias (+10% inspiração), Sorte Escrita (+4% dados dourados) e Roteiro Afiado (+5% velocidade de trama, até +100%).' },
       { label: 'Sem limite', text: 'Cada nível seguinte custa 1,5x a 1,8x mais inspiração. Não há nível máximo.' },
       { label: 'Permanente', text: 'Os níveis sobrevivem a campanhas e a publicações, e têm 9 conquistas próprias.' },
     ],
