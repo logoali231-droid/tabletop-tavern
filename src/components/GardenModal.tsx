@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { GameState } from '../types';
-import { gardenSeedsData } from '../data/gameData';
+import { gardenHybridsData, gardenSeedsData } from '../data/gameData';
 import {
   GARDEN_SPEEDUP_COST,
+  allSeedsData,
+  getCrossbreed,
   getGardenSlots,
   getPlotStatus,
   getSeedCost,
@@ -24,20 +26,24 @@ const RARITY_LABEL: Record<string, string> = {
   incomum: 'Incomum',
   raro: 'Raro',
   lendário: 'Lendário',
+  híbrido: 'Híbrido',
 };
 
 export default function GardenModal({ state, onPlant, onHarvest, onSpeed, onClose }: Props) {
   const [selectedId, setSelectedId] = useState(gardenSeedsData[0].id);
   const slots = getGardenSlots(state);
-  const selected = gardenSeedsData.find((seed) => seed.id === selectedId) ?? gardenSeedsData[0];
+  const knownSeeds = allSeedsData.filter((seed) => seed.req(state));
+  const selected = knownSeeds.find((seed) => seed.id === selectedId) ?? gardenSeedsData[0];
   const selectedCost = getSeedCost(state, selected);
 
   return (
     <Modal title="Grimório de Tramas" icon="/icons/scroll.svg" size="wide" onClose={onClose}>
       <p className="modal-lead">
         Cada página é uma trama esperando para acontecer. Plante com <strong>inspiração</strong>,
-        espere crescer e colha recursos, bônus ou Destino. Tramas iguais em páginas vizinhas ganham
-        <strong> sinergia</strong>: crescem 40% mais rápido e rendem 50% a mais.
+        espere crescer e colha recursos, bônus ou Destino.         Tramas iguais em páginas vizinhas ganham
+        <strong> sinergia</strong>: crescem 40% mais rápido e rendem 50% a mais. Tramas
+        <strong> diferentes</strong> que amadurecem lado a lado cruzam: ao colher uma delas
+        você descobre uma semente híbrida com recompensa própria.
       </p>
 
       <div className="garden-stats">
@@ -57,11 +63,18 @@ export default function GardenModal({ state, onPlant, onHarvest, onSpeed, onClos
           <span className="prestige-label">Dados</span>
           <strong className="garden-stat-value">{formatNumber(state.dice)}</strong>
         </div>
+        <div className="garden-stat">
+          <span className="prestige-label">Híbridos</span>
+          <strong className="garden-stat-value">
+            {state.hybridSeeds.length}/{gardenHybridsData.length}
+          </strong>
+        </div>
       </div>
 
       <div className="garden-hint">
         Página vazia planta <strong>{selected.name}</strong> por {selectedCost} de inspiração.
-        Página em crescimento acelera {formatTime(30)} com {GARDEN_SPEEDUP_COST} dados.
+        Página em crescimento acelera {formatTime(30)} com {GARDEN_SPEEDUP_COST} dados. Duas
+        tramas diferentes e maduras lado a lado mostram a marca <strong>cruzamento</strong>.
         {hasBlessing(state, 'librarian') ? ' O Bibliotecário Eterno colhe tudo sozinho.' : ''}
       </div>
 
@@ -86,7 +99,8 @@ export default function GardenModal({ state, onPlant, onHarvest, onSpeed, onClos
           }
 
           const { seed, progress, mature, secondsLeft, synergy } = status;
-          const shared = `plot ${mature ? 'mature' : 'growing'}${synergy ? ' synergy' : ''}`;
+          const cross = mature ? getCrossbreed(state, index) : null;
+          const shared = `plot ${mature ? 'mature' : 'growing'}${synergy ? ' synergy' : ''}${cross ? ' crossing' : ''}`;
 
           if (mature) {
             return (
@@ -95,12 +109,13 @@ export default function GardenModal({ state, onPlant, onHarvest, onSpeed, onClos
                 type="button"
                 className={shared}
                 onClick={() => onHarvest(index)}
-                title={`Colher ${seed.name}`}
+                title={cross ? `Colher ${seed.name} e cruzar com outra trama` : `Colher ${seed.name}`}
               >
                 <img src={seed.icon} alt="" className="plot-icon" />
                 <span className="plot-name">{seed.name}</span>
-                <span className="plot-ready">Colher</span>
+                <span className="plot-ready">{cross ? 'Cruzar e colher' : 'Colher'}</span>
                 {synergy ? <span className="plot-chip">sinergia</span> : null}
+                {cross ? <span className="plot-chip cross">cruzamento</span> : null}
               </button>
             );
           }
@@ -130,7 +145,7 @@ export default function GardenModal({ state, onPlant, onHarvest, onSpeed, onClos
 
       <h3 className="prestige-heading">Tramas conhecidas</h3>
       <div className="seed-palette">
-        {gardenSeedsData.map((seed) => {
+        {allSeedsData.map((seed) => {
           const unlocked = seed.req(state);
           const cost = getSeedCost(state, seed);
           return (
@@ -145,7 +160,7 @@ export default function GardenModal({ state, onPlant, onHarvest, onSpeed, onClos
               <span className="seed-body">
                 <span className="seed-name">
                   {unlocked ? seed.name : '???'}
-                  <span className="seed-rarity">{RARITY_LABEL[seed.rarity]}</span>
+                  {unlocked ? <span className="seed-rarity">{RARITY_LABEL[seed.rarity]}</span> : null}
                 </span>
                 <span className="seed-meta">
                   {unlocked ? `${cost} inspiração · ${formatTime(seed.growSeconds)}` : seed.reqHint}

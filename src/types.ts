@@ -21,7 +21,7 @@ export interface GardenPlot {
   plantedAt: number;
 }
 
-export type SeedRarity = 'comum' | 'incomum' | 'raro' | 'lendário';
+export type SeedRarity = 'comum' | 'incomum' | 'raro' | 'lendário' | 'híbrido';
 
 export type SeedReward =
   | { kind: 'resource'; resource: ResourceType; seconds: number; min: number }
@@ -78,6 +78,8 @@ export interface GameState {
   activeBoosts: Boost[];
   garden: (GardenPlot | null)[];
   plotsHarvested: number;
+  /** Hybrid tramas discovered by crossbreeding; permanent like achievements. */
+  hybridSeeds: string[];
   diceSet: string[];
   equippedDie: string | null;
   soundOn: boolean;

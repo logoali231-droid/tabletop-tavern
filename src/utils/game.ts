@@ -2,7 +2,9 @@ import {
   achievementsData,
   buildingsData,
   diceSetData,
+  gardenHybridsData,
   gardenSeedsData,
+  hybridRecipes,
   goldenEffects,
   prestigeUpgradesData,
   upgradesData,
@@ -85,6 +87,7 @@ export function createInitialState(): GameState {
     activeBoosts: [],
     garden: [],
     plotsHarvested: 0,
+    hybridSeeds: [],
     diceSet: ['d4'],
     equippedDie: 'd4',
     soundOn: true,
@@ -294,6 +297,7 @@ export function prestigeReset(state: GameState): GameState {
     goldenDiceCollected: state.goldenDiceCollected,
     diceRolls: state.diceRolls,
     plotsHarvested: state.plotsHarvested,
+    hybridSeeds: [...state.hybridSeeds],
     playTime: state.playTime,
     soundOn: state.soundOn,
     lastSeen: Date.now(),
@@ -573,8 +577,12 @@ export function getGardenSlots(state: GameState): number {
 }
 
 export function seedById(id: string): SeedData | undefined {
-  return gardenSeedsData.find((seed) => seed.id === id);
+  return gardenSeedsData.find((seed) => seed.id === id)
+    ?? gardenHybridsData.find((seed) => seed.id === id);
 }
+
+/** All tramas, base and hybrid, in palette order. */
+export const allSeedsData: SeedData[] = [...gardenSeedsData, ...gardenHybridsData];
 
 /** Orthogonal neighbours in the 3-column page grid. */
 function neighbourIndices(index: number): number[] {
@@ -586,6 +594,29 @@ function neighbourIndices(index: number): number[] {
   if (row > 0) out.push(index - 3);
   out.push(index + 3);
   return out;
+}
+
+/**
+ * The hybrid this mature trama would produce: it needs a mature, different trama
+ * on an orthogonally adjacent page. Curated pairs have their own seed; every
+ * other combination falls back to Trama Cruzada.
+ */
+export function getCrossbreed(state: GameState, index: number, now = Date.now()): SeedData | null {
+  const status = getPlotStatus(state, index, now);
+  if (!status || !status.mature) return null;
+
+  for (const other of neighbourIndices(index)) {
+    const otherPlot = state.garden[other];
+    if (!otherPlot || otherPlot.seedId === status.seed.id) continue;
+    const otherStatus = getPlotStatus(state, other, now);
+    if (!otherStatus || !otherStatus.mature) continue;
+
+    const key = [status.seed.id, otherPlot.seedId].sort().join('+');
+    const hybridId = hybridRecipes[key] ?? 'hybridCruzada';
+    const hybrid = gardenHybridsData.find((seed) => seed.id === hybridId);
+    if (hybrid) return hybrid;
+  }
+  return null;
 }
 
 /** True when an adjacent page holds the same trama: both grow and harvest better. */
@@ -649,7 +680,7 @@ export function tryHarvestPlot(
   state: GameState,
   index: number,
   now = Date.now(),
-): { state: GameState; message: string } | null {
+): { state: GameState; message: string; hybrid?: SeedData } | null {
   const status = getPlotStatus(state, index, now);
   if (!status || !status.mature) return null;
 
@@ -662,6 +693,7 @@ export function tryHarvestPlot(
   };
   next.garden[index] = null;
   let message = '';
+  let harvested = next;
 
   if (seed.reward.kind === 'resource') {
     const { resource, seconds, min } = seed.reward;
@@ -669,13 +701,10 @@ export function tryHarvestPlot(
     addResource(next, resource, amount);
     const resourceName = RESOURCES.find((entry) => entry.id === resource)?.label ?? '';
     message = `${seed.name}: +${formatNumber(amount)} ${resourceName}${synergy ? ' (sinergia!)' : ''}`;
-    return { state: applyAchievements(next), message };
-  }
-
-  if (seed.reward.kind === 'boost') {
+  } else if (seed.reward.kind === 'boost') {
     const duration = Math.round(seed.reward.duration * getBoostDurationMult(state)
       * (hasBlessing(state, 'richHarvest') ? 1.5 : 1) * (synergy ? 1.5 : 1));
-    const boosted = applyBoost(next, {
+    harvested = applyBoost(next, {
       id: `seed-${seed.id}`,
       name: seed.reward.name,
       desc: seed.desc,
@@ -684,13 +713,21 @@ export function tryHarvestPlot(
       timeLeft: duration,
     });
     message = `${seed.name}: bônus ativo por ${duration}s${synergy ? ' (sinergia!)' : ''}`;
-    return { state: applyAchievements(boosted), message };
+  } else {
+    const amount = Math.max(1, Math.round(seed.reward.amount * harvestMult));
+    addResource(next, 'fate', amount);
+    message = `${seed.name}: +${formatNumber(amount)} Destino${synergy ? ' (sinergia!)' : ''}`;
   }
 
-  const amount = Math.max(1, Math.round(seed.reward.amount * harvestMult));
-  addResource(next, 'fate', amount);
-  message = `${seed.name}: +${formatNumber(amount)} Destino${synergy ? ' (sinergia!)' : ''}`;
-  return { state: applyAchievements(next), message };
+  // Crossbreeding: a mature, different neighbour unlocks a hybrid seed.
+  const hybrid = getCrossbreed(state, index, now);
+  if (hybrid && !state.hybridSeeds.includes(hybrid.id)) {
+    harvested = { ...harvested, hybridSeeds: [...state.hybridSeeds, hybrid.id] };
+    message += ` · Novo híbrido: ${hybrid.name}!`;
+    return { state: applyAchievements(harvested), message, hybrid };
+  }
+
+  return { state: applyAchievements(harvested), message };
 }
 
 /* ------------------------------------------------------------------ */
@@ -792,6 +829,8 @@ export function normalizeSave(raw: unknown): GameState | null {
     activeBoosts: [],
     garden: gardenRecord(parsed.garden),
     plotsHarvested: finite(parsed.plotsHarvested),
+    hybridSeeds: stringArray(parsed.hybridSeeds)
+      .filter((id) => gardenHybridsData.some((seed) => seed.id === id)),
     diceSet,
     equippedDie,
     soundOn: parsed.soundOn !== false,

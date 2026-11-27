@@ -16,6 +16,7 @@ import {
   diceRollMessage,
   getAdvantageCost,
   getClickValue,
+  getCrossbreed,
   getFateGain,
   getGardenSlots,
   getGoldenDelayMult,
@@ -222,6 +223,10 @@ export default function App() {
         .filter((index) => getPlotStatus(current, index)?.mature);
       if (ready.length === 0) return;
 
+      const hybrid = ready
+        .map((index) => getCrossbreed(current, index))
+        .find((seed) => seed && !current.hybridSeeds.includes(seed.id));
+
       setState((previous) => {
         let next = previous;
         for (const index of ready) next = tryHarvestPlot(next, index)?.state ?? next;
@@ -230,7 +235,7 @@ export default function App() {
       playSound('achievement', current.soundOn);
       pushToast({
         title: 'Bibliotecário Eterno',
-        desc: `${ready.length} trama(s) colhida(s) automaticamente.`,
+        desc: `${ready.length} trama(s) colhida(s) automaticamente.${hybrid ? ` Híbrido: ${hybrid.name}!` : ''}`,
         icon: '/icons/scroll.svg',
       });
     }, 2000);
@@ -412,6 +417,13 @@ export default function App() {
     playSound('upgrade', stateRef.current.soundOn);
     setState(result.state);
     pushToast({ title: 'Trama colhida', desc: result.message, icon: '/icons/scroll.svg' });
+    if (result.hybrid) {
+      pushToast({
+        title: 'Híbrido descoberto',
+        desc: `${result.hybrid.name} agora pode ser plantada.`,
+        icon: result.hybrid.icon,
+      });
+    }
   };
 
   const speedPlot = (index: number) => {

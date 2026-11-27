@@ -957,6 +957,17 @@ h1, h2, h3, h4 { font-family: 'Cinzel', serif; letter-spacing: 0.3px; }
   font-weight: 700;
 }
 
+.plot-chip.cross { left: 6px; right: auto; background: var(--purple); color: #f6ecff; }
+
+.plot.crossing {
+  border-color: var(--purple);
+  box-shadow: inset 0 0 0 1px rgba(155, 93, 229, 0.6), 0 0 18px rgba(155, 93, 229, 0.25);
+}
+
+.plot.crossing.mature { animation: none; }
+
+.seed-card.híbrido { border-left: 3px solid var(--purple); }
+
 .plot-bar { width: 100%; height: 5px; background: #2a1e12; border-radius: 3px; overflow: hidden; }
 .plot-bar-fill { display: block; height: 100%; background: linear-gradient(90deg, #9b5de5, #e9c46a); }
 
