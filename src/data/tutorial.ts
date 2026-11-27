@@ -43,8 +43,17 @@ export const tutorialSteps: TutorialStep[] = [
     text: 'A aba Melhorias traz compras únicas que multiplicam construções ou cliques. O botão "Comprar tudo" leva todas as que você já consegue pagar.',
   },
   {
+    title: 'Sinergias de construções',
+    target: '.synergy-strip',
+    text: 'Conjuntos temáticos dão bônus global: Mesa Posta pede Taverna, Bardo e Lanchonete. Chips dourados estão ativos; os apagados mostram no tooltip o que falta para completar.',
+  },
+  {
     title: 'Dados Dourados',
     text: 'De tempos em tempos um D20 dourado aparece na tela por 14 segundos. Clique nele para ganhar Frenesi x7, cliques x777, chuva de dados, cópias grátis de construção ou o Jackpot do Dragão.',
+  },
+  {
+    title: 'Mesas ao Vivo',
+    text: 'De 4 em 4 minutos um chefe aparece por 45 segundos: cada Atacar causa dano com combo crescente e a vitória paga 3 minutos de produção, +2 Destino e produção x3 por 30s.',
   },
   {
     title: 'Dados e o D20',

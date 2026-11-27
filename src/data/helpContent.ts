@@ -70,9 +70,10 @@ export const helpSections: HelpSection[] = [
     title: 'Conquistas e fama',
     icon: '/icons/trophy.svg',
     items: [
-      { label: '348 conquistas', text: 'Cada conquista dá +2% de produção permanente (ou +4% com a bênção Fama Dobrada). Elas nunca são perdidas em resets.' },
+      { label: '359 conquistas', text: 'Cada conquista dá +2% de produção permanente (ou +4% com a bênção Fama Dobrada). Elas nunca são perdidas em resets.' },
       { label: 'Categorias', text: 'O navegador separa Geral, Construções, Prestígio, Editora, Grimório, Dados e Estúdio, com busca sem acento, filtro de bloqueadas e barra de progresso.' },
       { label: 'Marcos', text: 'Cada construção tem 6 marcos (até 1.000 unidades) e o Estúdio rende 9 conquistas próprias.' },
+      { label: 'Sinergias', text: 'Conjuntos temáticos de construções (Mesa Posta, Arsenal Arcano, Corte Feérica...) dão bônus global permanente enquanto você tiver pelo menos uma de cada.' },
     ],
   },
   {
@@ -123,6 +124,7 @@ export const helpSections: HelpSection[] = [
     items: [
       { label: 'Ganho', text: 'Destino = raiz cúbica de (jogadores ganhos na campanha ÷ 100 mil). O primeiro ponto exige 100 mil jogadores e cada década seguinte vale cerca de 2,15x mais.' },
       { label: 'Reset de campanha', text: 'Zera jogadores, ouro, dados, inspiração, construções, melhorias e tramas plantadas. Mantém conquistas, bênçãos, Destino, dados, híbridos e Estúdio.' },
+      { label: 'Destino passivo', text: 'Construções que rendem Destino têm teto: no máximo 1/30 do que a campanha atual renderia por segundo. Resets continuam sendo a fonte principal.' },
       { label: 'Bênçãos', text: 'São 46 bênçãos em 8 grupos (Fundação, Produção, Cliques, Sorte, Dados, Grimório, Tempo e Legado), cada uma mudando uma regra. Bênçãos e Destino nunca são perdidos em campanhas.' },
     ],
   },
@@ -145,6 +147,27 @@ export const helpSections: HelpSection[] = [
       { label: 'Acúmulo', text: 'Ao voltar, você recebe a produção do tempo em que ficou fora: até 8 horas normalmente, 24 horas com a bênção Mestre Ausente e 72 horas com Taverna dos Sonhos.' },
       { label: 'Eficiência', text: 'Sem bênção, o rendimento offline é 50% da produção normal; com Mestre Ausente sobe para 100% e com Taverna dos Sonhos para 150%.' },
       { label: 'Resumo', text: 'Um painel mostra exatamente quanto tempo rendeu e o que foi ganho.' },
+    ],
+  },
+  {
+    id: 'sinergias',
+    title: 'Sinergias de construções',
+    icon: '/icons/table.svg',
+    items: [
+      { label: 'Como ativam', text: 'Cada sinergia pede pelo menos uma unidade de três construções específicas. Enquanto as três existirem, o bônus é permanente e entra no multiplicador global.' },
+      { label: 'As oito sinergias', text: 'Mesa Posta (+15%), Arsenal Arcano (+20%), Corte Feérica (+20%), Além do Véu (+25%), Forja do Mundo (+25%), Alta Sociedade (+20%), Bestiário (+30%) e A Mesa de Tudo (+50%).' },
+      { label: 'Onde ver', text: 'A faixa de sinergias fica no topo da aba Construções: chips dourados estão ativos, chips apagados mostram no tooltip quais construções faltam.' },
+    ],
+  },
+  {
+    id: 'mesas',
+    title: 'Mesas ao Vivo (chefes)',
+    icon: '/icons/dice.svg',
+    items: [
+      { label: 'Como aparecem', text: 'Depois dos primeiros jogadores, um chefe surge a cada 4–8 minutos e fica 45 segundos. Fechar um painel ou abrir o tutorial pausa o relógio.' },
+      { label: 'Como vencer', text: 'Cada Atacar causa dano igual a 10x o seu clique, com combo crescente de 8% por golpe. São cerca de 12 golpes para derrubar.' },
+      { label: 'Recompensa', text: 'Vitória rende 3 minutos de produção de jogadores, ouro, dados e inspiração, +2 Destino e o Troféu da Mesa (produção x3 por 30s). Se o tempo acabar, o chefe vai embora sem prêmio.' },
+      { label: 'Conquistas', text: 'Vença 1, 10 e 50 Mesas ao Vivo. O contador é permanente e sobrevive a resets.' },
     ],
   },
   {

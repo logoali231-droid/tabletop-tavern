@@ -70,6 +70,8 @@ export interface GameState {
   buildingMultipliers: Record<string, number>;
   upgradesBought: string[];
   campaigns: number; campaignMultiplier: number; prestigeUpgradesBought: string[];
+  /** Mesas ao Vivo (chefes) vencidas; permanente como as conquistas. */
+  bossesDefeated: number;
   /** Second prestige layer: permanent Lendas, each one a permanent bonus. */
   legends: number;
   publications: number;
@@ -147,7 +149,8 @@ export type AchievementCategory =
   | 'Grimório'
   | 'Dados'
   | 'Estúdio'
-  | 'Editora';
+  | 'Editora'
+  | 'Sinergias';
 
 export interface AchievementData {
   id: string;
@@ -169,4 +172,33 @@ export interface GoldenEffect {
   duration: number;
   /** When set, the effect rains this many extra dice on the screen. */
   spawns?: number;
+}
+
+export interface SynergyData {
+  id: string;
+  name: string;
+  /** Achievement unlocked when the whole set is owned. */
+  achievement: string;
+  icon: string;
+  desc: string;
+  /** Building ids that must each have at least one unit. */
+  buildings: string[];
+  /** Fractional global production bonus while active. */
+  bonus: number;
+}
+
+export interface BossTemplate {
+  id: string;
+  name: string;
+  icon: string;
+  flavor: string;
+}
+
+/** A running Mesa ao Vivo encounter. */
+export interface BossEncounter extends BossTemplate {
+  key: string;
+  hp: number;
+  maxHp: number;
+  timeLeft: number;
+  combo: number;
 }

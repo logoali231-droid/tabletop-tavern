@@ -1,6 +1,7 @@
 import {
   AchievementCategory,
   AchievementData,
+  BossTemplate,
   BuildingData,
   DieData,
   GameState,
@@ -9,6 +10,7 @@ import {
   ResourceType,
   SeedData,
   StudioUpgradeData,
+  SynergyData,
   UpgradeData,
 } from '../types';
 import { milestoneNames, milestoneTiers } from './milestones';
@@ -570,6 +572,94 @@ export const youBuilding: BuildingData = {
 
 /** Core buildings plus the always-last "you" building. */
 export const buildingsData: BuildingData[] = [...coreBuildings, youBuilding];
+
+/** Themed building sets: owning one of each turns the set into a global bonus. */
+export const synergyData: SynergyData[] = [
+  {
+    id: 'setTable',
+    name: 'Mesa Posta',
+    achievement: 'A Mesa Está Posta',
+    icon: '/icons/tavern.svg',
+    desc: 'Taverna, Bardo Viajante e Lanchonete: +15% produção global.',
+    buildings: ['tavern', 'bard', 'snackBar'],
+    bonus: 0.15,
+  },
+  {
+    id: 'arcaneArsenal',
+    name: 'Arsenal Arcano',
+    achievement: 'Arsenal Completo',
+    icon: '/icons/tower.svg',
+    desc: 'Torre de Mago, Biblioteca Arcana e Forja de Dados: +20% produção global.',
+    buildings: ['magicTower', 'arcaneLibrary', 'diceForge'],
+    bonus: 0.2,
+  },
+  {
+    id: 'feyCourtSet',
+    name: 'Corte Feérica',
+    achievement: 'Corte Reunida',
+    icon: '/icons/crown.svg',
+    desc: 'Coroa Real, Corte Feérica e Taverna do Panteão: +20% produção global.',
+    buildings: ['royalCrown', 'feyCourt', 'pantheonTavern'],
+    bonus: 0.2,
+  },
+  {
+    id: 'beyondVeil',
+    name: 'Além do Véu',
+    achievement: 'Além do Véu',
+    icon: '/icons/portal.svg',
+    desc: 'Portal Planar, Portão dos Sonhos e Oceano de Tinta: +25% produção global.',
+    buildings: ['planarPortal', 'dreamGate', 'inkOcean'],
+    bonus: 0.25,
+  },
+  {
+    id: 'worldForge',
+    name: 'Forja do Mundo',
+    achievement: 'Forja do Mundo',
+    icon: '/icons/forge.svg',
+    desc: 'Forja Titânica, Forja Mecânica e Lua de Dados: +25% produção global.',
+    buildings: ['titanForge', 'clockworkForge', 'moonOfDice'],
+    bonus: 0.25,
+  },
+  {
+    id: 'highSociety',
+    name: 'Alta Sociedade',
+    achievement: 'Alta Sociedade',
+    icon: '/icons/hall.svg',
+    desc: 'Centro de Convenções, Guilda de Aventureiros e Conselho dos Mestres: +20% produção global.',
+    buildings: ['conventionHall', 'guild', 'councilOfMasters'],
+    bonus: 0.2,
+  },
+  {
+    id: 'bestiary',
+    name: 'Bestiário',
+    achievement: 'Bestiário Completo',
+    icon: '/icons/dragon.svg',
+    desc: 'Covil do Dragão, Império do Dragão e Serpente do Mundo: +30% produção global.',
+    buildings: ['dragonLair', 'dragonEmpire', 'worldSerpent'],
+    bonus: 0.3,
+  },
+  {
+    id: 'everythingTable',
+    name: 'A Mesa de Tudo',
+    achievement: 'A Mesa de Tudo',
+    icon: '/icons/table.svg',
+    desc: 'Taverna do Universo, Mesa Infinita e Você: +50% produção global.',
+    buildings: ['universalTavern', 'infiniteTable', 'you'],
+    bonus: 0.5,
+  },
+];
+
+/** Who shows up for a Mesa ao Vivo (boss encounter). */
+export const bossData: BossTemplate[] = [
+  { id: 'rulesLawyer', name: 'O Regelista', icon: '/icons/scroll.svg', flavor: 'Ele interrompe o combate para citar livro, página e parágrafo.' },
+  { id: 'metagamer', name: 'O Metagamer', icon: '/icons/dice.svg', flavor: 'Já sabe o stat block do monstro e a senha da porta secreta.' },
+  { id: 'cancelledSession', name: 'A Sessão Cancelada', icon: '/icons/fate.svg', flavor: 'Três jogadores cancelaram em cima da hora. Ela veio cobrar.' },
+  { id: 'floorDie', name: 'O Dado no Chão', icon: '/icons/golden-d20.svg', flavor: 'Ninguém viu onde caiu, mas todos sabem que foi 1.' },
+  { id: 'murderHobo', name: 'O Assassino de NPCs', icon: '/icons/shield.svg', flavor: 'Ataca o taverneiro, o ferreiro e o bardo. Nessa ordem.' },
+  { id: 'tpk', name: 'O TPK', icon: '/icons/dragon.svg', flavor: 'A party inteira caiu na primeira sala. A mesa pede vingança.' },
+  { id: 'absentMaster', name: 'O Mestre Ausente', icon: '/icons/gear.svg', flavor: 'Preparou a sessão inteira e esqueceu que era hoje.' },
+  { id: 'railroad', name: 'O Trilho', icon: '/icons/guild.svg', flavor: 'Você pode ir a qualquer lugar, desde que seja onde ele planejou.' },
+];
 
 const clickUpgrades: UpgradeData[] = [
   {
@@ -1434,11 +1524,29 @@ const publishAchievements: AchievementData[] = [
   { id: 'legends200', name: 'Duzentas Lendas', desc: 'Acumule 200 Lendas.', icon: '/icons/portal.svg', category: 'Editora', req: (s) => s.legends >= 200 },
 ];
 
+/** One achievement per complete synergy set, plus the Mesa ao Vivo ladder. */
+const synergyAchievements: AchievementData[] = synergyData.map((synergy) => ({
+  id: `synergy${synergy.id[0].toUpperCase()}${synergy.id.slice(1)}`,
+  name: synergy.achievement,
+  desc: `Tenha as ${synergy.buildings.length} construções da sinergia ${synergy.name}.`,
+  icon: synergy.icon,
+  category: 'Sinergias',
+  req: (state: GameState) => synergy.buildings.every((id) => (state.buildings[id] ?? 0) >= 1),
+}));
+
+const bossAchievements: AchievementData[] = [
+  { id: 'boss1', name: 'Mesa ao Vivo', desc: 'Vença sua primeira Mesa ao Vivo.', icon: '/icons/dice.svg', category: 'Geral', req: (s) => s.bossesDefeated >= 1 },
+  { id: 'boss10', name: 'Mestre de Cerimônias', desc: 'Vença 10 Mesas ao Vivo.', icon: '/icons/shield.svg', category: 'Geral', req: (s) => s.bossesDefeated >= 10 },
+  { id: 'boss50', name: 'Lenda da Mesa', desc: 'Vença 50 Mesas ao Vivo.', icon: '/icons/crown.svg', category: 'Geral', req: (s) => s.bossesDefeated >= 50 },
+];
+
 export const achievementsData: AchievementData[] = [
   ...categorisedBaseAchievements,
   ...buildingAchievements,
   ...studioAchievements,
   ...publishAchievements,
+  ...synergyAchievements,
+  ...bossAchievements,
 ];
 
 export const goldenEffects: GoldenEffect[] = [

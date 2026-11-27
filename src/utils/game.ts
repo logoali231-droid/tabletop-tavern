@@ -1,6 +1,7 @@
 import {
   achievementsData,
   buildingsData,
+  bossData,
   diceSetData,
   gardenHybridsData,
   gardenSeedsData,
@@ -8,9 +9,11 @@ import {
   goldenEffects,
   prestigeUpgradesData,
   studioData,
+  synergyData,
   upgradesData,
 } from '../data/gameData';
 import {
+  BossEncounter,
   Boost,
   BuildingData,
   BuyAmount,
@@ -22,6 +25,7 @@ import {
   ResourceType,
   SeedData,
   StudioUpgradeData,
+  SynergyData,
 } from '../types';
 import { formatNumber } from './format';
 
@@ -43,6 +47,20 @@ export const CAMPAIGNS_PER_LEGEND = 5;
 /** Cada Lenda vale +5% de produção e +5% de Destino, para sempre. */
 export const LEGEND_PROD_BONUS = 0.05;
 export const LEGEND_FATE_BONUS = 0.05;
+/**
+ * Destino vindo de construções nunca passa de uma campanha a cada 30s, para o
+ * reset continuar sendo a fonte principal no fim do jogo.
+ */
+export const FATE_YIELD_CAP_SECONDS = 30;
+/** Mesa ao Vivo (boss) timing, in seconds. */
+export const BOSS_FIRST_DELAY = 90;
+export const BOSS_INTERVAL_MIN = 240;
+export const BOSS_INTERVAL_MAX = 480;
+export const BOSS_DURATION = 45;
+/** How many clicks a boss takes, so it is always a short fight. */
+export const BOSS_HITS = 12;
+export const BOSS_MIN_PLAYERS = 5000;
+export const BOSS_COMBO_STEP = 0.08;
 /** Upper bound for one "Max" purchase, so the loop stays cheap. */
 const MAX_BULK_BUY = 1000;
 
@@ -88,6 +106,7 @@ export function createInitialState(): GameState {
     buildings: {}, buildingMultipliers: {},
     upgradesBought: [],
     campaigns: 0, campaignMultiplier: 1, prestigeUpgradesBought: [],
+    bossesDefeated: 0,
     legends: 0, publications: 0,
     achievements: [],
     goldenDiceCollected: 0,
@@ -176,7 +195,8 @@ export function getProdMultiplier(state: GameState): number {
     * getFameBonus(state)
     * getBoostProd(state)
     * getStudioProd(state)
-    * getLegendProdBonus(state);
+    * getLegendProdBonus(state)
+    * getSynergyBonus(state);
 }
 
 export function getClickMultiplier(state: GameState): number {
@@ -222,6 +242,8 @@ export function getProduction(state: GameState): Production {
     }
   }
   total.inspiration *= getStudioInspiration(state);
+  // Destino passivo é limitado para o reset continuar valendo a pena.
+  total.fate = Math.min(total.fate, getFateYieldCap(state));
   return total;
 }
 
@@ -319,6 +341,11 @@ export function getNextFatePlayers(state: GameState): number {
   return Math.ceil(FATE_PLAYERS_PER_POINT * (target / getFateGainMultiplier(state)) ** 3);
 }
 
+/** Teto de Destino passivo por segundo, atrelado ao ganho da campanha atual. */
+export function getFateYieldCap(state: GameState): number {
+  return Math.max(0.1, getFateGain(state) / FATE_YIELD_CAP_SECONDS);
+}
+
 export function unlockDice(state: GameState): GameState {
   const missing = diceSetData.filter((die) => !state.diceSet.includes(die.id) && die.req(state));
   if (missing.length === 0) return state;
@@ -382,6 +409,7 @@ export function prestigeReset(state: GameState): GameState {
     fateEarned: state.fateEarned + gained,
     buildings: keptBuildings,
     prestigeUpgradesBought: [...state.prestigeUpgradesBought],
+    bossesDefeated: state.bossesDefeated,
     legends: state.legends,
     publications: state.publications,
     achievements: [...state.achievements],
@@ -435,6 +463,7 @@ export function publishReset(state: GameState): GameState {
     ...createInitialState(),
     legends: state.legends + gained,
     publications: state.publications + 1,
+    bossesDefeated: state.bossesDefeated,
     achievements: [...state.achievements],
     diceSet: [...state.diceSet],
     equippedDie: state.equippedDie,
@@ -967,6 +996,7 @@ export function normalizeSave(raw: unknown): GameState | null {
     campaigns,
     campaignMultiplier: positive(parsed.campaignMultiplier, 1 + campaigns * 0.1),
     prestigeUpgradesBought: stringArray(parsed.prestigeUpgradesBought),
+    bossesDefeated: Math.max(0, Math.floor(finite(parsed.bossesDefeated))),
     legends: Math.max(0, Math.floor(finite(parsed.legends))),
     publications: Math.max(0, Math.floor(finite(parsed.publications))),
     achievements: stringArray(parsed.achievements),
@@ -1039,4 +1069,80 @@ export function loadGame(): { state: GameState; offline: OfflineReport | null } 
   } catch {
     return { state: base, offline: null };
   }
+}
+
+/* ------------------------------------------------------------------ */
+/* building synergies                                                  */
+/* ------------------------------------------------------------------ */
+
+export function isSynergyActive(state: GameState, synergy: SynergyData): boolean {
+  return synergy.buildings.every((id) => (state.buildings[id] ?? 0) >= 1);
+}
+
+export function getActiveSynergies(state: GameState): SynergyData[] {
+  return synergyData.filter((synergy) => isSynergyActive(state, synergy));
+}
+
+/** Multiplier granted by every complete synergy set. */
+export function getSynergyBonus(state: GameState): number {
+  return 1 + getActiveSynergies(state).reduce((sum, synergy) => sum + synergy.bonus, 0);
+}
+
+/** Buildings still missing from a set, used by the shop tooltip. */
+export function getMissingSynergyBuildings(state: GameState, synergy: SynergyData): string[] {
+  return synergy.buildings.filter((id) => (state.buildings[id] ?? 0) < 1);
+}
+
+/* ------------------------------------------------------------------ */
+/* Mesas ao Vivo (boss encounters)                                     */
+/* ------------------------------------------------------------------ */
+
+export function getBossDamage(state: GameState): number {
+  return Math.max(1, Math.round(getClickValue(state) * 10));
+}
+
+export function nextBossDelay(random: () => number = Math.random): number {
+  return (BOSS_INTERVAL_MIN + random() * (BOSS_INTERVAL_MAX - BOSS_INTERVAL_MIN)) * 1000;
+}
+
+export function createBoss(state: GameState, random: () => number = Math.random): BossEncounter {
+  const template = bossData[Math.floor(random() * bossData.length)];
+  const maxHp = getBossDamage(state) * BOSS_HITS;
+  return {
+    ...template,
+    key: `${template.id}-${Date.now()}`,
+    hp: maxHp,
+    maxHp,
+    timeLeft: BOSS_DURATION,
+    combo: 0,
+  };
+}
+
+export function bossHitDamage(state: GameState, boss: BossEncounter): number {
+  return Math.round(getBossDamage(state) * (1 + boss.combo * BOSS_COMBO_STEP));
+}
+
+/** Three minutes of production, 2 Destino and a trophy boost for winning. */
+export function applyBossVictory(state: GameState): { state: GameState; gains: Production } {
+  const production = getProduction(state);
+  const gains: Production = {
+    players: Math.max(production.players * 180, 0),
+    gold: Math.max(production.gold * 180, 0),
+    dice: Math.max(60, production.dice * 180),
+    inspiration: Math.max(25, production.inspiration * 180),
+    fate: 2,
+  };
+
+  const next: GameState = { ...state, bossesDefeated: state.bossesDefeated + 1 };
+  for (const resource of RESOURCE_IDS) addResource(next, resource, gains[resource]);
+
+  const boosted = applyBoost(next, {
+    id: 'bossTrophy',
+    name: 'Troféu da Mesa',
+    desc: 'Produção x3',
+    prodMult: 3,
+    clickMult: 1,
+    timeLeft: 30,
+  });
+  return { state: applyAchievements(boosted), gains };
 }

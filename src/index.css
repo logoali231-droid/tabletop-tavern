@@ -1639,3 +1639,67 @@ h1, h2, h3, h4 { font-family: 'Cinzel', serif; letter-spacing: 0.3px; }
 @media (max-width: 640px) {
   .help-grid { grid-template-columns: 1fr; }
 }
+
+/* ---------- building synergies ---------- */
+.synergy-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.synergy-count {
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+}
+
+.synergy-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+
+.synergy-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border: 1px solid var(--border-soft);
+  border-radius: 99px;
+  font-size: 0.64rem;
+  color: var(--text-dim);
+  opacity: 0.65;
+}
+
+.synergy-chip .game-icon { width: 12px; height: 12px; }
+.synergy-chip.active { opacity: 1; color: var(--gold); border-color: var(--gold); background: rgba(233, 196, 106, 0.1); }
+
+/* ---------- Mesas ao Vivo ---------- */
+.boss-card {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 8500;
+  width: min(320px, calc(100vw - 32px));
+  padding: 12px 14px;
+  border: 2px solid var(--danger);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #3a2016, #1a110a);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
+}
+
+.boss-head { display: flex; align-items: center; gap: 8px; }
+.boss-icon { width: 34px; height: 34px; padding: 4px; border-radius: 8px; background: #2a1e12; flex: none; }
+.boss-titles { flex: 1; min-width: 0; }
+.boss-kicker { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--danger); }
+.boss-titles h3 { font-size: 0.95rem; color: var(--text-highlight); }
+.boss-time { font-size: 0.8rem; font-weight: 700; color: var(--danger); }
+.boss-flavor { margin: 8px 0; font-size: 0.72rem; line-height: 1.4; color: var(--text-dim); }
+
+.boss-bar { height: 10px; border: 1px solid var(--border-soft); border-radius: 99px; background: #241810; overflow: hidden; }
+.boss-bar-fill { display: block; height: 100%; background: linear-gradient(90deg, #e76f51, #f4a261); transition: width 0.15s ease; }
+.boss-meta { display: flex; justify-content: space-between; gap: 8px; margin: 6px 0 10px; font-size: 0.66rem; color: var(--text-dim); }
+.boss-hit { width: 100%; }
+
+@media (max-width: 640px) {
+  .boss-card { left: 10px; right: 10px; bottom: 10px; width: auto; }
+}

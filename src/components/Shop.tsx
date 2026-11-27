@@ -5,11 +5,14 @@ import {
   RESOURCES,
   buildingCost,
   bulkCost,
+  getActiveSynergies,
   getBuildingOutput,
+  getMissingSynergyBuildings,
   getProdMultiplier,
   maxAffordable,
   sellRefund,
 } from '../utils/game';
+import { synergyData } from '../data/gameData';
 
 interface Props {
   state: GameState;
@@ -124,6 +127,7 @@ export default function Shop({
   };
 
   const sellLabel = buyAmount === 'max' ? 'tudo' : `x${buyAmount}`;
+  const activeSynergies = new Set(getActiveSynergies(state).map((synergy) => synergy.id));
 
   return (
     <aside className="panel shop">
@@ -147,6 +151,29 @@ export default function Shop({
 
       {tab === 'buildings' ? (
         <>
+          <div className="synergy-strip">
+            <span className="synergy-count">
+              Sinergias {activeSynergies.size}/{synergyData.length}
+            </span>
+            <div className="synergy-chips">
+              {synergyData.map((synergy) => {
+                const active = activeSynergies.has(synergy.id);
+                const missing = getMissingSynergyBuildings(state, synergy)
+                  .map((id) => buildings.find((building) => building.id === id)?.name ?? id);
+                return (
+                  <span
+                    key={synergy.id}
+                    className={`synergy-chip${active ? ' active' : ''}`}
+                    title={active ? synergy.desc : `${synergy.name}: faltam ${missing.join(', ')}`}
+                  >
+                    <img src={synergy.icon} alt="" className="game-icon" />
+                    {synergy.name}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="shop-toolbar">
             <div className="trade-mode">
               <button

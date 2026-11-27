@@ -1,18 +1,23 @@
 import { MouseEvent, useCallback, useEffect, useRef, useState } from 'react';
-import { BuyAmount, GameState, ModalId } from './types';
+import { BossEncounter, BuyAmount, GameState, ModalId } from './types';
 import { achievementsData, buildingsData, upgradesData } from './data/gameData';
 import { formatNumber } from './utils/format';
 import { playSound } from './utils/sound';
 import {
+  BOSS_FIRST_DELAY,
+  BOSS_MIN_PLAYERS,
   LEGACY_SAVE_KEY,
   RESOURCE_IDS,
   SAVE_KEY,
   addResource,
+  applyBossVictory,
   affordableUpgrades,
   applyAchievements,
   applyDiceRoll,
   applyGoldenEffect,
+  bossHitDamage,
   collectStormDie,
+  createBoss,
   diceRollMessage,
   getAdvantageCost,
   getClickValue,
@@ -29,6 +34,7 @@ import {
   getStormCount,
   hasBlessing,
   loadGame,
+  nextBossDelay,
   normalizeSave,
   pickBuildingSpecial,
   pickGoldenEffect,
@@ -59,6 +65,7 @@ import PrestigeTree from './components/PrestigeTree';
 import PublishModal from './components/PublishModal';
 import DiceMinigame from './components/DiceMiniGame';
 import GoldenDice from './components/GoldenDice';
+import BossFight from './components/BossFight';
 import NewsTicker from './components/NewsTicker';
 import OfflineModal from './components/OfflineModal';
 import GardenModal from './components/GardenModal';
@@ -105,6 +112,7 @@ export default function App() {
   const [golden, setGolden] = useState<GoldenSpawn | null>(null);
   const [saveText, setSaveText] = useState('');
   const [savedAt, setSavedAt] = useState(Date.now());
+  const [boss, setBoss] = useState<BossEncounter | null>(null);
   const [tutorialStep, setTutorialStep] = useState<number | null>(() => {
     try {
       return localStorage.getItem(TUTORIAL_KEY) === 'done' ? null : 0;
@@ -121,6 +129,10 @@ export default function App() {
   const goldenRef = useRef<{ until: number } | null>(null);
   const nextGoldenAt = useRef(0);
   const stormQueue = useRef<number[]>([]);
+  const bossRef = useRef<BossEncounter | null>(null);
+  const nextBossAt = useRef(Date.now() + BOSS_FIRST_DELAY * 1000);
+  const modalRef = useRef<ModalId | null>(null);
+  const tutorialRef = useRef<number | null>(null);
 
   useEffect(() => {
     stateRef.current = state;
@@ -156,6 +168,25 @@ export default function App() {
     setTutorialStep(tutorialStep - 1);
   };
 
+  /* ---------------- Mesas ao Vivo (bosses) ---------------- */
+  useEffect(() => {
+    bossRef.current = boss;
+  }, [boss]);
+
+  useEffect(() => {
+    modalRef.current = modal;
+  }, [modal]);
+
+  useEffect(() => {
+    tutorialRef.current = tutorialStep;
+  }, [tutorialStep]);
+
+  const resetBossClock = () => {
+    bossRef.current = null;
+    setBoss(null);
+    nextBossAt.current = Date.now() + nextBossDelay();
+  };
+
   const pushToast = useCallback((toast: Omit<Toast, 'id'>) => {
     const id = toastId.current + 1;
     toastId.current = id;
@@ -164,6 +195,44 @@ export default function App() {
       setToasts((previous) => previous.filter((item) => item.id !== id));
     }, 5200);
   }, []);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      // Paused while a panel or the tour is open, so no fight is wasted in the background.
+      if (modalRef.current !== null || tutorialRef.current !== null) return;
+
+      const current = stateRef.current;
+      const active = bossRef.current;
+
+      if (!active) {
+        if (current.playersEarned < BOSS_MIN_PLAYERS) return;
+        if (Date.now() >= nextBossAt.current) {
+          const created = createBoss(current);
+          bossRef.current = created;
+          setBoss(created);
+        }
+        return;
+      }
+
+      const timeLeft = Math.round((active.timeLeft - 0.5) * 10) / 10;
+      if (timeLeft <= 0) {
+        bossRef.current = null;
+        setBoss(null);
+        nextBossAt.current = Date.now() + nextBossDelay();
+        pushToast({
+          title: 'Mesa ao Vivo encerrada',
+          desc: `${active.name} cansou de esperar e foi embora.`,
+          icon: active.icon,
+        });
+        return;
+      }
+
+      const next: BossEncounter = { ...active, timeLeft };
+      bossRef.current = next;
+      setBoss(next);
+    }, 500);
+    return () => window.clearInterval(interval);
+  }, [pushToast]);
 
   /* ---------------- game loop ---------------- */
   useEffect(() => {
@@ -363,6 +432,7 @@ export default function App() {
 
     playSound('prestige', current.soundOn);
     stormQueue.current = [];
+    resetBossClock();
     setState((previous) => prestigeReset(previous));
     setModal(null);
     pushToast({ title: 'Nova campanha', desc: `Você ganhou ${gained} Destino.`, icon: '/icons/fate.svg' });
@@ -382,10 +452,37 @@ export default function App() {
 
     playSound('prestige', current.soundOn);
     stormQueue.current = [];
+    resetBossClock();
     setState((previous) => publishReset(previous));
     setModal(null);
     pushToast({ title: 'Saga publicada', desc: `Você ganhou ${gained} Lendas.`, icon: '/icons/crown.svg' });
     scheduleGolden();
+  };
+
+  const hitBoss = () => {
+    const current = bossRef.current;
+    if (!current) return;
+    const game = stateRef.current;
+    const damage = bossHitDamage(game, current);
+    playSound('click', game.soundOn);
+
+    const hp = current.hp - damage;
+    if (hp > 0) {
+      const next: BossEncounter = { ...current, hp, combo: current.combo + 1 };
+      bossRef.current = next;
+      setBoss(next);
+      return;
+    }
+
+    const result = applyBossVictory(game);
+    setState(result.state);
+    resetBossClock();
+    playSound('golden', game.soundOn);
+    pushToast({
+      title: 'Mesa ao Vivo vencida',
+      desc: `${current.name} caiu: +2 Destino e Troféu da Mesa (x3 por 30s).`,
+      icon: current.icon,
+    });
   };
 
   const buyStudio = (id: string) => {
@@ -585,6 +682,8 @@ export default function App() {
       {golden ? (
         <GoldenDice x={golden.x} y={golden.y} bonus={golden.bonus} onCollect={collectGolden} />
       ) : null}
+
+      {boss ? <BossFight boss={boss} state={state} onHit={hitBoss} /> : null}
 
       {modal === 'garden' ? (
         <GardenModal
