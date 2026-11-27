@@ -22,6 +22,7 @@ import {
   getGoldenDelayMult,
   getGoldenDuration,
   getGoldClickValue,
+  getLegendGain,
   getPlotStatus,
   getProduction,
   getRollCost,
@@ -32,6 +33,7 @@ import {
   pickBuildingSpecial,
   pickGoldenEffect,
   prestigeReset,
+  publishReset,
   resolveRoll,
   rollGoldReward,
   saveGame,
@@ -54,6 +56,7 @@ import AchievementsModal from './components/AchievementsModal';
 import StatsModal from './components/StatsModal';
 import SettingsModal from './components/SettingsModal';
 import PrestigeTree from './components/PrestigeTree';
+import PublishModal from './components/PublishModal';
 import DiceMinigame from './components/DiceMiniGame';
 import GoldenDice from './components/GoldenDice';
 import NewsTicker from './components/NewsTicker';
@@ -326,6 +329,25 @@ export default function App() {
     scheduleGolden();
   };
 
+  const doPublish = () => {
+    const current = stateRef.current;
+    const gained = getLegendGain(current);
+    if (gained < 1) return;
+    const confirmed = window.confirm(
+      `Publicar a campanha por +${gained} Lendas?\n\n`
+      + 'Campanhas, bênçãos, Destino, recursos, construções e melhorias serão perdidos. '
+      + 'Conquistas, dados, híbridos, níveis do Estúdio e todas as Lendas permanecem.',
+    );
+    if (!confirmed) return;
+
+    playSound('prestige', current.soundOn);
+    stormQueue.current = [];
+    setState((previous) => publishReset(previous));
+    setModal(null);
+    pushToast({ title: 'Saga publicada', desc: `Você ganhou ${gained} Lendas.`, icon: '/icons/crown.svg' });
+    scheduleGolden();
+  };
+
   const buyStudio = (id: string) => {
     const next = tryBuyStudio(stateRef.current, id);
     if (!next) return;
@@ -543,8 +565,13 @@ export default function App() {
           state={state}
           onBuyPrestige={buyPrestige}
           onPrestige={doPrestige}
+          onOpenPublish={() => setModal('publish')}
           onClose={() => setModal(null)}
         />
+      ) : null}
+
+      {modal === 'publish' ? (
+        <PublishModal state={state} onPublish={doPublish} onClose={() => setModal(null)} />
       ) : null}
 
       {modal === 'minigame' ? (

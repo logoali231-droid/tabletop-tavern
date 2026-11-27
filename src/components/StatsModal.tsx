@@ -42,6 +42,8 @@ export default function StatsModal({ state, onClose }: Props) {
           <Row label="Rolagens de D20" value={formatNumber(state.diceRolls)} />
           <Row label="Tramas colhidas" value={formatNumber(state.plotsHarvested)} />
           <Row label="Bênçãos compradas" value={formatNumber(state.prestigeUpgradesBought.length)} />
+          <Row label="Sagas publicadas" value={formatNumber(state.publications)} />
+          <Row label="Lendas" value={formatNumber(state.legends)} />
         </section>
 
         <section className="stat-section">

@@ -1,6 +1,6 @@
 import { GameState } from '../types';
 import { prestigeUpgradesData } from '../data/gameData';
-import { getFateGain, getNextFatePlayers } from '../utils/game';
+import { getFateGain, getLegendProdBonus, getNextFatePlayers } from '../utils/game';
 import { formatNumber } from '../utils/format';
 import Modal from './Modal';
 
@@ -8,6 +8,7 @@ interface Props {
   state: GameState;
   onBuyPrestige: (id: string, cost: number) => void;
   onPrestige: () => void;
+  onOpenPublish: () => void;
   onClose: () => void;
 }
 
@@ -16,10 +17,11 @@ interface Group {
   blessings: typeof prestigeUpgradesData;
 }
 
-export default function PrestigeTree({ state, onBuyPrestige, onPrestige, onClose }: Props) {
+export default function PrestigeTree({ state, onBuyPrestige, onPrestige, onOpenPublish, onClose }: Props) {
   const gain = getFateGain(state);
   const canPrestige = gain >= 1;
   const missingForNext = Math.max(0, getNextFatePlayers(state) - state.playersEarned);
+  const legendBonus = Math.round((getLegendProdBonus(state) - 1) * 100);
   const bought = state.prestigeUpgradesBought.length;
 
   const groups: Group[] = [];
@@ -68,6 +70,17 @@ export default function PrestigeTree({ state, onBuyPrestige, onPrestige, onClose
               ? 'Você perde jogadores, ouro, construções e melhorias. Conquistas, bênçãos, tramas e Destino ficam.'
               : `Faltam ${formatNumber(missingForNext)} jogadores nesta campanha para o próximo Destino.`}
           </span>
+        </div>
+        <div className="prestige-block">
+          <span className="prestige-label">Editora · Publicar</span>
+          <strong className="prestige-big">{formatNumber(state.legends)}</strong>
+          <span className="prestige-note">
+            Lendas (+{legendBonus}% produção). A segunda camada de prestígio transforma a saga inteira
+            em uma Lenda permanente.
+          </span>
+          <button type="button" className="btn btn-ghost" onClick={onOpenPublish}>
+            Publicar a Campanha
+          </button>
         </div>
       </div>
 

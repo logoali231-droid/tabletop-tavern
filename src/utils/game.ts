@@ -36,6 +36,13 @@ export const ADVANTAGE_COST_MULT = 2.5;
 export const GARDEN_MAX_SLOTS = 9;
 export const GARDEN_SPEEDUP_COST = 5;
 export const GARDEN_SPEEDUP_SECONDS = 30;
+/** Campanhas que a saga precisa antes de poder ser publicada. */
+export const PUBLISH_MIN_CAMPAIGNS = 10;
+/** Campanhas concluídas por Lenda ao publicar. */
+export const CAMPAIGNS_PER_LEGEND = 5;
+/** Cada Lenda vale +5% de produção e +5% de Destino, para sempre. */
+export const LEGEND_PROD_BONUS = 0.05;
+export const LEGEND_FATE_BONUS = 0.05;
 /** Upper bound for one "Max" purchase, so the loop stays cheap. */
 const MAX_BULK_BUY = 1000;
 
@@ -81,6 +88,7 @@ export function createInitialState(): GameState {
     buildings: {}, buildingMultipliers: {},
     upgradesBought: [],
     campaigns: 0, campaignMultiplier: 1, prestigeUpgradesBought: [],
+    legends: 0, publications: 0,
     achievements: [],
     goldenDiceCollected: 0,
     diceRolls: 0,
@@ -167,7 +175,8 @@ export function getProdMultiplier(state: GameState): number {
     * getCampaignBonus(state)
     * getFameBonus(state)
     * getBoostProd(state)
-    * getStudioProd(state);
+    * getStudioProd(state)
+    * getLegendProdBonus(state);
 }
 
 export function getClickMultiplier(state: GameState): number {
@@ -283,17 +292,31 @@ export const FATE_PLAYERS_PER_POINT = 100000;
  * Destino por campanha cresce com raiz cúbica: cada década de jogadores vale só
  * ~2x de Destino, então bênçãos continuam sendo uma decisão a longo prazo.
  */
+/** +5% de produção global por Lenda publicada. */
+export function getLegendProdBonus(state: GameState): number {
+  return 1 + LEGEND_PROD_BONUS * state.legends;
+}
+
+/** +5% de Destino por Lenda publicada. */
+export function getLegendFateBonus(state: GameState): number {
+  return 1 + LEGEND_FATE_BONUS * state.legends;
+}
+
+/** Bênção do Amplificador + Lendas, aplicadas à raiz do Destino. */
+function getFateGainMultiplier(state: GameState): number {
+  return (hasBlessing(state, 'fateAmplifier') ? 1.25 : 1) * getLegendFateBonus(state);
+}
+
 export function getFateGain(state: GameState): number {
   // O epsilon evita que um cubo exato (ex.: 1000) caia para 9.999… e perca um ponto.
-  const base = Math.floor(Math.cbrt(state.playersEarned / FATE_PLAYERS_PER_POINT) + 1e-9);
-  return hasBlessing(state, 'fateAmplifier') ? Math.floor(base * 1.25) : base;
+  const cube = Math.cbrt(state.playersEarned / FATE_PLAYERS_PER_POINT) + 1e-9;
+  return Math.floor(cube * getFateGainMultiplier(state));
 }
 
 /** Total de jogadores que a campanha atual precisa para o próximo ponto de Destino. */
 export function getNextFatePlayers(state: GameState): number {
   const target = getFateGain(state) + 1;
-  const base = hasBlessing(state, 'fateAmplifier') ? target / 1.25 : target;
-  return Math.ceil(FATE_PLAYERS_PER_POINT * base ** 3);
+  return Math.ceil(FATE_PLAYERS_PER_POINT * (target / getFateGainMultiplier(state)) ** 3);
 }
 
 export function unlockDice(state: GameState): GameState {
@@ -359,6 +382,8 @@ export function prestigeReset(state: GameState): GameState {
     fateEarned: state.fateEarned + gained,
     buildings: keptBuildings,
     prestigeUpgradesBought: [...state.prestigeUpgradesBought],
+    legends: state.legends,
+    publications: state.publications,
     achievements: [...state.achievements],
     diceSet: [...state.diceSet],
     equippedDie: state.equippedDie,
@@ -375,6 +400,56 @@ export function prestigeReset(state: GameState): GameState {
     prestigeUpgradesData.find((upgrade) => upgrade.id === id)?.apply(next);
   }
   return next;
+}
+
+/* ------------------------------------------------------------------ */
+/* publishing                                                          */
+/* ------------------------------------------------------------------ */
+
+/** Lendas que a saga atual rende ao ser publicada. */
+export function getLegendGain(state: GameState): number {
+  if (state.campaigns < PUBLISH_MIN_CAMPAIGNS) return 0;
+  return Math.floor(state.campaigns / CAMPAIGNS_PER_LEGEND);
+}
+
+/** Campanhas que faltam para desbloquear a publicação. */
+export function getCampaignsUntilPublish(state: GameState): number {
+  return Math.max(0, PUBLISH_MIN_CAMPAIGNS - state.campaigns);
+}
+
+/** Campanhas que faltam para a próxima Lenda. */
+export function getCampaignsUntilNextLegend(state: GameState): number {
+  return Math.max(0, (getLegendGain(state) + 1) * CAMPAIGNS_PER_LEGEND - state.campaigns);
+}
+
+/**
+ * Second prestige layer: everything the prestige reset clears also goes away
+ * here, plus the blessings and the Destino themselves. Achievements, dice,
+ * hybrids, Estúdio levels and Lendas survive forever.
+ */
+export function publishReset(state: GameState): GameState {
+  const gained = getLegendGain(state);
+  if (gained < 1) return state;
+
+  const next: GameState = {
+    ...createInitialState(),
+    legends: state.legends + gained,
+    publications: state.publications + 1,
+    achievements: [...state.achievements],
+    diceSet: [...state.diceSet],
+    equippedDie: state.equippedDie,
+    studioLevels: { ...state.studioLevels },
+    hybridSeeds: [...state.hybridSeeds],
+    goldenDiceCollected: state.goldenDiceCollected,
+    diceRolls: state.diceRolls,
+    plotsHarvested: state.plotsHarvested,
+    // Destino total é estatística vitalícia: publicar zera o saldo, não o histórico.
+    fateEarned: state.fateEarned,
+    playTime: state.playTime,
+    soundOn: state.soundOn,
+    lastSeen: Date.now(),
+  };
+  return applyAchievements(next);
 }
 
 /* ------------------------------------------------------------------ */
@@ -892,6 +967,8 @@ export function normalizeSave(raw: unknown): GameState | null {
     campaigns,
     campaignMultiplier: positive(parsed.campaignMultiplier, 1 + campaigns * 0.1),
     prestigeUpgradesBought: stringArray(parsed.prestigeUpgradesBought),
+    legends: Math.max(0, Math.floor(finite(parsed.legends))),
+    publications: Math.max(0, Math.floor(finite(parsed.publications))),
     achievements: stringArray(parsed.achievements),
     goldenDiceCollected: finite(parsed.goldenDiceCollected),
     diceRolls: finite(parsed.diceRolls),

@@ -2,7 +2,7 @@ export type ResourceType = 'players' | 'gold' | 'dice' | 'inspiration' | 'fate';
 
 export type BuyAmount = 1 | 10 | 100 | 'max';
 
-export type ModalId = 'prestige' | 'minigame' | 'achievements' | 'stats' | 'settings' | 'garden' | 'studio';
+export type ModalId = 'prestige' | 'publish' | 'minigame' | 'achievements' | 'stats' | 'settings' | 'garden' | 'studio';
 
 export type Production = Record<ResourceType, number>;
 
@@ -70,6 +70,9 @@ export interface GameState {
   buildingMultipliers: Record<string, number>;
   upgradesBought: string[];
   campaigns: number; campaignMultiplier: number; prestigeUpgradesBought: string[];
+  /** Second prestige layer: permanent Lendas, each one a permanent bonus. */
+  legends: number;
+  publications: number;
   achievements: string[];
   goldenDiceCollected: number;
   diceRolls: number;
@@ -143,7 +146,8 @@ export type AchievementCategory =
   | 'Prestígio'
   | 'Grimório'
   | 'Dados'
-  | 'Estúdio';
+  | 'Estúdio'
+  | 'Editora';
 
 export interface AchievementData {
   id: string;

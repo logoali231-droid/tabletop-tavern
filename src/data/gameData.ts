@@ -1289,10 +1289,21 @@ const studioAchievements: AchievementData[] = [
   { id: 'studioTotal250', name: 'Fábrica de Mundos', desc: 'Some 250 níveis no Estúdio de Ideias.', icon: '/icons/portal.svg', category: 'Estúdio', req: (s) => studioTotalLevels(s) >= 250 },
 ];
 
+/** Milestones for the second prestige layer, Publicar a Campanha. */
+const publishAchievements: AchievementData[] = [
+  { id: 'publish1', name: 'Primeira Publicação', desc: 'Publique sua primeira saga.', icon: '/icons/crown.svg', category: 'Editora', req: (s) => s.publications >= 1 },
+  { id: 'publish5', name: 'Coleção de Sagas', desc: 'Publique 5 sagas.', icon: '/icons/scroll.svg', category: 'Editora', req: (s) => s.publications >= 5 },
+  { id: 'publish20', name: 'Biblioteca de Sagas', desc: 'Publique 20 sagas.', icon: '/icons/hall.svg', category: 'Editora', req: (s) => s.publications >= 20 },
+  { id: 'legends10', name: 'Dez Lendas', desc: 'Acumule 10 Lendas.', icon: '/icons/fate.svg', category: 'Editora', req: (s) => s.legends >= 10 },
+  { id: 'legends50', name: 'Cinquenta Lendas', desc: 'Acumule 50 Lendas.', icon: '/icons/trophy.svg', category: 'Editora', req: (s) => s.legends >= 50 },
+  { id: 'legends200', name: 'Duzentas Lendas', desc: 'Acumule 200 Lendas.', icon: '/icons/portal.svg', category: 'Editora', req: (s) => s.legends >= 200 },
+];
+
 export const achievementsData: AchievementData[] = [
   ...categorisedBaseAchievements,
   ...buildingAchievements,
   ...studioAchievements,
+  ...publishAchievements,
 ];
 
 export const goldenEffects: GoldenEffect[] = [

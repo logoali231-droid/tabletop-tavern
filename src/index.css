@@ -897,6 +897,37 @@ h1, h2, h3, h4 { font-family: 'Cinzel', serif; letter-spacing: 0.3px; }
 .prestige-big { font-family: 'Cinzel', serif; font-size: 1.7rem; color: var(--text-highlight); }
 .prestige-big.fate { color: var(--danger); }
 .prestige-note { font-size: 0.72rem; color: var(--text-dim); line-height: 1.4; }
+.icon-btn-badge.legends { background: var(--gold); }
+
+.publish-notes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.publish-note {
+  background: #1a110a;
+  border: 1px solid var(--border-soft);
+  border-radius: 9px;
+  padding: 10px 12px;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+.publish-note strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.publish-note.keep { border-color: rgba(42, 157, 143, 0.5); }
+.publish-note.keep strong { color: var(--success); }
+.publish-note.lose { border-color: rgba(231, 111, 81, 0.45); }
+.publish-note.lose strong { color: var(--danger); }
 
 .prestige-heading { font-size: 1.05rem; color: var(--text-highlight); margin-bottom: 2px; }
 

@@ -59,6 +59,18 @@ export default function ResourceBar({ state, onOpen, savedAt }: Props) {
         <button
           type="button"
           className="icon-btn"
+          onClick={() => onOpen('publish')}
+          title={`Publicar a Campanha (${state.legends} Lendas)`}
+          aria-label="Publicar a Campanha"
+        >
+          <img src="/icons/crown.svg" alt="" className="game-icon" />
+          {state.legends > 0 ? (
+            <span className="icon-btn-badge legends">{formatNumber(state.legends)}</span>
+          ) : null}
+        </button>
+        <button
+          type="button"
+          className="icon-btn"
           onClick={() => onOpen('achievements')}
           title={`Conquistas (${state.achievements.length})`}
           aria-label="Conquistas"
