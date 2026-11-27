@@ -13,7 +13,8 @@ import {
 } from '../types';
 import { milestoneNames, milestoneTiers } from './milestones';
 
-export const buildingsData: BuildingData[] = [
+/** Regular buildings in unlock order. Add new ones here, never straight into buildingsData. */
+const coreBuildings: BuildingData[] = [
   {
     id: 'gameTable',
     name: 'Mesa de Jogo',
@@ -434,7 +435,141 @@ export const buildingsData: BuildingData[] = [
     req: (s) => (s.buildings.timeVault ?? 0) >= 1,
     reqHint: 'Construa um Cofre do Tempo.',
   },
+  {
+    id: 'carnivalOfFates',
+    name: 'Circo dos Fados',
+    baseCost: 25000000000000000000,
+    costRes: 'gold',
+    yield: { players: 120000000000000, gold: 3000000000000 },
+    icon: '/icons/lute.svg',
+    desc: '+120T jogadores/s, +3T ouro/s',
+    flavor: 'A cartomante lê o seu futuro e ri: ele já está pago.',
+    req: (s) => (s.buildings.universalTavern ?? 0) >= 1,
+    reqHint: 'Construa a Taverna do Universo.',
+  },
+  {
+    id: 'scriptorium',
+    name: 'Scriptorium Infinito',
+    baseCost: 40000000,
+    costRes: 'inspiration',
+    yield: { players: 250000000000000, dice: 80000000 },
+    icon: '/icons/scroll.svg',
+    desc: '+250T jogadores/s, +80M dados/s',
+    flavor: 'Copistas escrevem as suas sessões antes de você jogá-las.',
+    req: (s) => (s.buildings.carnivalOfFates ?? 0) >= 1,
+    reqHint: 'Construa um Circo dos Fados.',
+  },
+  {
+    id: 'pantheonTavern',
+    name: 'Taverna do Panteão',
+    baseCost: 70000000000000000000,
+    costRes: 'gold',
+    yield: { gold: 25000000000000, fate: 2500 },
+    icon: '/icons/crown.svg',
+    desc: '+25T ouro/s, +2.5K destino/s',
+    flavor: 'Os deuses descem para beber e reclamar do balanceamento.',
+    req: (s) => (s.buildings.scriptorium ?? 0) >= 1,
+    reqHint: 'Construa um Scriptorium Infinito.',
+  },
+  {
+    id: 'moonOfDice',
+    name: 'Lua de Dados',
+    baseCost: 400000000,
+    costRes: 'dice',
+    yield: { dice: 400000000, players: 500000000000000 },
+    icon: '/icons/golden-d20.svg',
+    desc: '+400M dados/s, +500T jogadores/s',
+    flavor: 'Uma lua inteira de obsidiana, girando em busca de um 20.',
+    req: (s) => (s.buildings.pantheonTavern ?? 0) >= 1,
+    reqHint: 'Construa uma Taverna do Panteão.',
+  },
+  {
+    id: 'realityStudio',
+    name: 'Estúdio da Realidade',
+    baseCost: 180000000000000000000,
+    costRes: 'gold',
+    yield: { inspiration: 6000000000, gold: 80000000000000 },
+    icon: '/icons/brush.svg',
+    desc: '+6B inspiração/s, +80T ouro/s',
+    flavor: 'Aqui as leis da física são revisadas antes de cada sessão.',
+    req: (s) => (s.buildings.moonOfDice ?? 0) >= 1,
+    reqHint: 'Construa uma Lua de Dados.',
+  },
+  {
+    id: 'councilOfMasters',
+    name: 'Conselho dos Mestres',
+    baseCost: 150000000,
+    costRes: 'inspiration',
+    yield: { players: 1500000000000000, inspiration: 15000000000 },
+    icon: '/icons/hall.svg',
+    desc: '+1500T jogadores/s, +15B inspiração/s',
+    flavor: 'Nenhuma decisão é tomada sem quórum de mestres.',
+    req: (s) => (s.buildings.realityStudio ?? 0) >= 1,
+    reqHint: 'Construa um Estúdio da Realidade.',
+  },
+  {
+    id: 'dreamCartographer',
+    name: 'Cartógrafo dos Sonhos',
+    baseCost: 500000000000000000000,
+    costRes: 'gold',
+    yield: { dice: 1500000000, fate: 5000 },
+    icon: '/icons/portal.svg',
+    desc: '+1.5B dados/s, +5K destino/s',
+    flavor: 'Ele mapeia os sonhos dos jogadores e cobra por isso.',
+    req: (s) => (s.buildings.councilOfMasters ?? 0) >= 1,
+    reqHint: 'Construa um Conselho dos Mestres.',
+  },
+  {
+    id: 'livingCampaign',
+    name: 'Campanha Viva',
+    baseCost: 1200000000000000000000,
+    costRes: 'gold',
+    yield: { players: 4000000000000000, gold: 500000000000000 },
+    icon: '/icons/inspiration.svg',
+    desc: '+4000T jogadores/s, +500T ouro/s',
+    flavor: 'A campanha começou a jogar sozinha. Ninguém sabe mais quem é o mestre.',
+    req: (s) => (s.buildings.dreamCartographer ?? 0) >= 1,
+    reqHint: 'Construa um Cartógrafo dos Sonhos.',
+  },
+  {
+    id: 'infiniteTable',
+    name: 'Mesa Infinita',
+    baseCost: 600000000,
+    costRes: 'inspiration',
+    yield: { players: 12000000000000000, inspiration: 70000000000, fate: 9000 },
+    icon: '/icons/table.svg',
+    desc: '+12000T jogadores/s, +70B inspiração/s, +9K destino/s',
+    flavor: 'Cada vez que você chega ao fim da mesa, ela continua um pouco mais.',
+    req: (s) => (s.buildings.livingCampaign ?? 0) >= 1,
+    reqHint: 'Construa uma Campanha Viva.',
+  },
 ];
+
+/**
+ * The last building, always. It lives outside coreBuildings and is appended in
+ * buildingsData, so any building added later still shows up before it.
+ */
+export const youBuilding: BuildingData = {
+  id: 'you',
+  name: 'Você',
+  baseCost: 8000000000000000000000,
+  costRes: 'gold',
+  yield: {
+    players: 60000000000000000,
+    gold: 6000000000000000,
+    dice: 20000000000,
+    inspiration: 100000000000,
+    fate: 20000,
+  },
+  icon: '/icons/players.svg',
+  desc: '+60000T jogadores/s, +6000T ouro/s, +20B dados/s, +100B inspiração/s, +20K destino/s',
+  flavor: 'A taverna nunca foi o lugar. Era você o tempo todo.',
+  req: (s) => (s.buildings.infiniteTable ?? 0) >= 1 && s.publications >= 1,
+  reqHint: 'Construa uma Mesa Infinita e publique uma campanha.',
+};
+
+/** Core buildings plus the always-last "you" building. */
+export const buildingsData: BuildingData[] = [...coreBuildings, youBuilding];
 
 const clickUpgrades: UpgradeData[] = [
   {

@@ -39,7 +39,8 @@ export const helpSections: HelpSection[] = [
     title: 'Construções',
     icon: '/icons/tavern.svg',
     items: [
-      { label: '35 construções', text: 'Cada uma tem custo, recurso de custo e produção próprios. As primeiras pagam em jogadores, as últimas em ouro, dados ou inspiração.' },
+      { label: '45 construções', text: 'Cada uma tem custo, recurso de custo e produção próprios. As primeiras pagam em jogadores, as últimas em ouro, dados ou inspiração.' },
+      { label: 'A última é você', text: 'A construção final da lista é sempre "Você": custa uma fortuna em ouro, exige a Mesa Infinita e uma campanha publicada, e produz os cinco recursos, incluindo Destino. Novas construções entram sempre antes dela.' },
       { label: 'Preço crescente', text: 'Cada unidade custa 15% mais que a anterior. Comprar em lote cobra exatamente a soma dessas unidades.' },
       { label: 'Desbloqueio', text: 'Construções novas aparecem ao cumprir requisitos de recursos ou de outras construções. A próxima bloqueada aparece como "???" com a dica do requisito.' },
     ],
@@ -69,7 +70,7 @@ export const helpSections: HelpSection[] = [
     title: 'Conquistas e fama',
     icon: '/icons/trophy.svg',
     items: [
-      { label: '288 conquistas', text: 'Cada conquista dá +2% de produção permanente (ou +4% com a bênção Fama Dobrada). Elas nunca são perdidas em resets.' },
+      { label: '348 conquistas', text: 'Cada conquista dá +2% de produção permanente (ou +4% com a bênção Fama Dobrada). Elas nunca são perdidas em resets.' },
       { label: 'Categorias', text: 'O navegador separa Geral, Construções, Prestígio, Editora, Grimório, Dados e Estúdio, com busca sem acento, filtro de bloqueadas e barra de progresso.' },
       { label: 'Marcos', text: 'Cada construção tem 6 marcos (até 1.000 unidades) e o Estúdio rende 9 conquistas próprias.' },
     ],

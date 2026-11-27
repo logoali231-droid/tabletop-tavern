@@ -39,6 +39,16 @@ export const milestoneNames: Record<string, string[]> = {
   stoneColossus: ['Pedra em Pé', 'Colosso de Pedra', 'Guardião de Pedra', 'Muralha Viva', 'Montanha Andante', 'Era de Pedra'],
   timeVault: ['Ampulheta', 'Cofre do Tempo', 'Arquivo das Horas', 'Século Guardado', 'Milênio Seguro', 'Tempo Infinito'],
   universalTavern: ['Mesa Final', 'Taverna do Universo', 'Taverna Estelar', 'Taverna Multiversal', 'Taverna de Tudo', 'Fim de Tudo'],
+  carnivalOfFates: ['Barraca de Adivinhação', 'Circo Itinerante', 'Circo dos Fados', 'Feira dos Destinos', 'Cidade do Circo', 'O Grande Espetáculo'],
+  scriptorium: ['Escriba Solitário', 'Scriptorium', 'Ordem dos Copistas', 'Mosteiro de Tinta', 'Arquivo Mundial', 'Palavra Eterna'],
+  pantheonTavern: ['Mesa dos Deuses', 'Taverna do Panteão', 'Salão dos Imortais', 'Olimpo Servido', 'Reino dos Deuses', 'Onde os Deuses Bebem'],
+  moonOfDice: ['Dado na Cratera', 'Lua de Dados', 'Satélite Sortudo', 'Órbita dos Dados', 'Sistema dos Dados', 'Galáxia Rolando'],
+  realityStudio: ['Tela em Branco', 'Estúdio da Realidade', 'Ateliê dos Mundos', 'Fábrica de Universos', 'Multiverso Criativo', 'Tudo é Rascunho'],
+  councilOfMasters: ['Mestre Convocado', 'Conselho dos Mestres', 'Assembleia de Mesas', 'Senado dos Mestres', 'Governo Narrativo', 'Os Mestres de Tudo'],
+  dreamCartographer: ['Mapa Rabiscado', 'Cartógrafo dos Sonhos', 'Atlas Onírico', 'Continente Sonhado', 'Mundo Mapeado', 'Mapa de Tudo'],
+  livingCampaign: ['Sessão que Não Acaba', 'Campanha Viva', 'Saga Sem Fim', 'Mundo que Joga', 'Realidade Campanha', 'A Campanha Eterna'],
+  infiniteTable: ['Mesa Comprida', 'Mesa Infinita', 'Mesa Sem Bordas', 'Mesa do Horizonte', 'Mesa do Universo', 'A Mesa de Tudo'],
+  you: ['Primeiro Personagem', 'Ficha Preenchida', 'Você Mesmo', 'Você, o Mestre', 'Você em Todo Lugar', 'Você é a Taverna'],
 };
 
 /** How many units each milestone asks for; later buildings ask for less. */

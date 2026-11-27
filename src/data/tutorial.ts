@@ -30,7 +30,7 @@ export const tutorialSteps: TutorialStep[] = [
   {
     title: 'Construções',
     target: '.shop',
-    text: 'São 35 construções, cada uma com custo e produção próprios. O preço de cada unidade sobe 15%, e as construções mais fortes só aparecem conforme você progride.',
+    text: 'São 45 construções, cada uma com custo e produção próprios. O preço de cada unidade sobe 15%, e a última da lista é sempre "Você", a construção final do jogo.',
   },
   {
     title: 'Comprar, vender e lotes',

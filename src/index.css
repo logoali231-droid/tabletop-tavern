@@ -1575,8 +1575,21 @@ h1, h2, h3, h4 { font-family: 'Cinzel', serif; letter-spacing: 0.3px; }
 .tutorial-nav { display: flex; gap: 8px; }
 
 @media (max-width: 640px) {
-  .tutorial-card { right: 10px; left: 10px; bottom: 10px; width: auto; }
+  .tutorial-card {
+    right: 10px;
+    left: 10px;
+    bottom: 10px;
+    width: auto;
+    max-height: 40vh;
+    overflow-y: auto;
+  }
+
   .tutorial-card.centered { left: 10px; right: 10px; top: 50%; transform: translateY(-50%); }
+
+  /* Split the screen: the open panel keeps the top half, the card keeps the bottom. */
+  .tutorial-open .modal-backdrop { align-items: flex-start; padding: 10px; }
+  .tutorial-open .modal { max-height: 52vh; }
+  .tutorial-open .modal-body { padding-bottom: 14px; }
 }
 
 /* ---------- help ---------- */

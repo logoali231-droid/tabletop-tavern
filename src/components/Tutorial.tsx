@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { tutorialSteps } from '../data/tutorial';
 
 interface Props {
@@ -18,6 +18,13 @@ interface Box {
 export default function Tutorial({ step, onNext, onPrev, onClose }: Props) {
   const current = tutorialSteps[step];
   const [box, setBox] = useState<Box | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  /* Lets the stylesheet make room for the card while the tour is open. */
+  useEffect(() => {
+    document.body.classList.add('tutorial-open');
+    return () => document.body.classList.remove('tutorial-open');
+  }, []);
 
   /* Measures the highlighted element twice a second, so panels that open late still line up. */
   useEffect(() => {
@@ -58,7 +65,10 @@ export default function Tutorial({ step, onNext, onPrev, onClose }: Props) {
     const element = document.querySelector(current.target);
     if (!element) return;
     const rect = element.getBoundingClientRect();
-    if (rect.top < 80 || rect.bottom > window.innerHeight - 80) {
+    // On phones the card is a bottom sheet, so the target must clear its height too.
+    const cardHeight = cardRef.current?.getBoundingClientRect().height ?? 0;
+    const blockedBottom = window.innerWidth <= 640 ? cardHeight + 24 : 80;
+    if (rect.top < 80 || rect.bottom > window.innerHeight - blockedBottom) {
       element.scrollIntoView({ block: 'center', behavior: 'smooth' });
     }
   }, [current, step]);
@@ -92,7 +102,7 @@ export default function Tutorial({ step, onNext, onPrev, onClose }: Props) {
         <div className="tutorial-veil" />
       )}
 
-      <div className={`tutorial-card${box ? '' : ' centered'}`}>
+      <div className={`tutorial-card${box ? '' : ' centered'}`} ref={cardRef}>
         <span className="tutorial-step">Passo {step + 1} de {tutorialSteps.length}</span>
         <h3>{current.title}</h3>
         <p>{current.text}</p>
