@@ -1,5 +1,5 @@
 import { GameState, ModalId, ResourceType } from '../types';
-import { getGardenSlots, getPlotStatus, getProduction, RESOURCES } from '../utils/game';
+import { getEquippedDie, getGardenSlots, getPlotStatus, getProduction, RESOURCES } from '../utils/game';
 import { formatNumber, formatRate } from '../utils/format';
 
 interface Props {
@@ -48,6 +48,7 @@ export default function ResourceBar({ state, onOpen, savedAt }: Props) {
         </button>
         <button type="button" className="btn btn-ghost" onClick={() => onOpen('minigame')}>
           <img src="/icons/dice.svg" alt="" className="game-icon" /> Dados
+          <span className="die-tag">{getEquippedDie(state).label}</span>
         </button>
         <button type="button" className="btn btn-danger" onClick={() => onOpen('prestige')}>
           <img src="/icons/fate.svg" alt="" className="game-icon" /> Prestígio

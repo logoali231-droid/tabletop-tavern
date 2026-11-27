@@ -41,6 +41,24 @@ export interface SeedData {
   reqHint: string;
 }
 
+export interface DieData {
+  id: string;
+  label: string;
+  name: string;
+  faces: number;
+  /** Multiplier applied to the click value. */
+  clickMult: number;
+  /** Lowest natural d20 result that counts as a critical. */
+  critMin: number;
+  /** Multiplier for how often golden dice show up. */
+  goldenMult: number;
+  desc: string;
+  flavor: string;
+  icon: string;
+  req: (state: GameState) => boolean;
+  reqHint: string;
+}
+
 export interface GameState {
   players: number; playersEarned: number;
   gold: number; goldEarned: number;
@@ -60,6 +78,8 @@ export interface GameState {
   activeBoosts: Boost[];
   garden: (GardenPlot | null)[];
   plotsHarvested: number;
+  diceSet: string[];
+  equippedDie: string | null;
   soundOn: boolean;
 }
 

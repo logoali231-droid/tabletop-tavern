@@ -39,6 +39,7 @@ import {
   tryBuyBuilding,
   tryBuyPrestige,
   tryBuyUpgrade,
+  tryEquipDie,
   tryHarvestPlot,
   tryPlantSeed,
   trySellBuilding,
@@ -318,6 +319,13 @@ export default function App() {
     scheduleGolden();
   };
 
+  const equipDie = (id: string) => {
+    const next = tryEquipDie(stateRef.current, id);
+    if (!next) return;
+    playSound('upgrade', stateRef.current.soundOn);
+    setState(next);
+  };
+
   /** Charges the dice and resolves the roll immediately, so closing the modal cannot eat it. */
   const spinDice = (withAdvantage: boolean): { result: number; message: string } | null => {
     const current = stateRef.current;
@@ -515,7 +523,12 @@ export default function App() {
       ) : null}
 
       {modal === 'minigame' ? (
-        <DiceMinigame state={state} onSpin={spinDice} onClose={() => setModal(null)} />
+        <DiceMinigame
+          state={state}
+          onSpin={spinDice}
+          onEquip={equipDie}
+          onClose={() => setModal(null)}
+        />
       ) : null}
 
       {modal === 'achievements' ? (

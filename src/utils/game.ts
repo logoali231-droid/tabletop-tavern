@@ -1,6 +1,7 @@
 import {
   achievementsData,
   buildingsData,
+  diceSetData,
   gardenSeedsData,
   goldenEffects,
   prestigeUpgradesData,
@@ -10,6 +11,7 @@ import {
   Boost,
   BuildingData,
   BuyAmount,
+  DieData,
   GameState,
   GardenPlot,
   GoldenEffect,
@@ -83,6 +85,8 @@ export function createInitialState(): GameState {
     activeBoosts: [],
     garden: [],
     plotsHarvested: 0,
+    diceSet: ['d4'],
+    equippedDie: 'd4',
     soundOn: true,
   };
 }
@@ -180,8 +184,18 @@ export function getFingerBonus(state: GameState): number {
   return bonus;
 }
 
+export function getEquippedDie(state: GameState): DieData {
+  return diceSetData.find((die) => die.id === state.equippedDie) ?? diceSetData[0];
+}
+
+/** Lowest d20 face that counts as a critical with the equipped die. */
+export function getCritMin(state: GameState): number {
+  const blessingThreshold = hasBlessing(state, 'critRange') ? 19 : 20;
+  return Math.min(getEquippedDie(state).critMin, blessingThreshold);
+}
+
 export function getClickValue(state: GameState): number {
-  const base = getClickMultiplier(state);
+  const base = getClickMultiplier(state) * getEquippedDie(state).clickMult;
   const fingerBonus = getFingerBonus(state) * getProduction(state).players;
   return base + fingerBonus;
 }
@@ -226,16 +240,30 @@ export function getFateGain(state: GameState): number {
   return hasBlessing(state, 'fateAmplifier') ? Math.floor(base * 1.25) : base;
 }
 
+export function unlockDice(state: GameState): GameState {
+  const missing = diceSetData.filter((die) => !state.diceSet.includes(die.id) && die.req(state));
+  if (missing.length === 0) return state;
+  return { ...state, diceSet: [...state.diceSet, ...missing.map((die) => die.id)] };
+}
+
 export function applyAchievements(state: GameState): GameState {
-  const owned = new Set(state.achievements);
+  const base = unlockDice(state);
+  const owned = new Set(base.achievements);
   const unlocked: string[] = [];
   for (const achievement of achievementsData) {
-    if (!owned.has(achievement.id) && achievement.req(state)) {
+    if (!owned.has(achievement.id) && achievement.req(base)) {
       unlocked.push(achievement.id);
     }
   }
-  if (unlocked.length === 0) return state;
-  return { ...state, achievements: [...state.achievements, ...unlocked] };
+  if (unlocked.length === 0) return base;
+  return { ...base, achievements: [...base.achievements, ...unlocked] };
+}
+
+/** Equips a die that has already been collected. */
+export function tryEquipDie(state: GameState, id: string): GameState | null {
+  if (state.equippedDie === id) return null;
+  if (!state.diceSet.includes(id) || !diceSetData.some((die) => die.id === id)) return null;
+  return { ...state, equippedDie: id };
 }
 
 export function prestigeReset(state: GameState): GameState {
@@ -261,6 +289,8 @@ export function prestigeReset(state: GameState): GameState {
     buildings: keptBuildings,
     prestigeUpgradesBought: [...state.prestigeUpgradesBought],
     achievements: [...state.achievements],
+    diceSet: [...state.diceSet],
+    equippedDie: state.equippedDie,
     goldenDiceCollected: state.goldenDiceCollected,
     diceRolls: state.diceRolls,
     plotsHarvested: state.plotsHarvested,
@@ -370,9 +400,9 @@ export function getAdvantageCost(state: GameState): number {
   return Math.round(getRollCost(state) * ADVANTAGE_COST_MULT);
 }
 
-/** A 19 becomes a 20 with the Critico Ampliado blessing. */
+/** Promotes any roll inside the equipped die's crit range to a natural 20. */
 export function resolveRoll(state: GameState, result: number): number {
-  return hasBlessing(state, 'critRange') && result === 19 ? 20 : result;
+  return result >= getCritMin(state) ? 20 : result;
 }
 
 export function rollGoldReward(result: number, production: Production, state?: GameState): number {
@@ -432,7 +462,7 @@ export function getGoldenDelayMult(state: GameState): number {
   let mult = 1;
   if (state.upgradesBought.includes('radiantDice')) mult *= 0.5;
   if (hasBlessing(state, 'luckOfTavern')) mult *= 0.5;
-  return mult;
+  return mult / getEquippedDie(state).goldenMult;
 }
 
 export function getStormCount(state: GameState, base: number): number {
@@ -733,6 +763,11 @@ export function normalizeSave(raw: unknown): GameState | null {
   if (typeof parsed.players !== 'number' || !Number.isFinite(parsed.players)) return null;
 
   const campaigns = Math.max(0, Math.floor(finite(parsed.campaigns)));
+  const diceSet = stringArray(parsed.diceSet).filter((id) => diceSetData.some((die) => die.id === id));
+  if (!diceSet.includes('d4')) diceSet.unshift('d4');
+  const equippedDie = typeof parsed.equippedDie === 'string' && diceSet.includes(parsed.equippedDie)
+    ? parsed.equippedDie
+    : 'd4';
   const state: GameState = {
     ...createInitialState(),
     players: finite(parsed.players), playersEarned: finite(parsed.playersEarned),
@@ -757,6 +792,8 @@ export function normalizeSave(raw: unknown): GameState | null {
     activeBoosts: [],
     garden: gardenRecord(parsed.garden),
     plotsHarvested: finite(parsed.plotsHarvested),
+    diceSet,
+    equippedDie,
     soundOn: parsed.soundOn !== false,
   };
 
