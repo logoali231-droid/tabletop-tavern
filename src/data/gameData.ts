@@ -1629,6 +1629,24 @@ const bossAchievements: AchievementData[] = [
   { id: 'boss50', name: 'Lenda da Mesa', desc: 'Vença 50 Mesas ao Vivo.', icon: '/icons/crown.svg', category: 'Geral', req: (s) => s.bossesDefeated >= 50 },
 ];
 
+/** Níveis de maestria somados, contando só construções conhecidas. */
+const totalMasteryLevels = (state: GameState) => Object.values(state.masteryLevels)
+  .reduce((sum, level) => sum + level, 0);
+
+/** Dados de Artífice: maestria permanente de construções. */
+const masteryAchievements: AchievementData[] = [
+  { id: 'mastery1', name: 'Primeira Maestria', desc: 'Invista seu primeiro Dado de Artífice.', icon: '/icons/artificer.svg', category: 'Artífice', req: (s) => totalMasteryLevels(s) >= 1 },
+  { id: 'mastery10', name: 'Oficina de Mestre', desc: 'Some 10 níveis de maestria.', icon: '/icons/forge.svg', category: 'Artífice', req: (s) => totalMasteryLevels(s) >= 10 },
+  { id: 'mastery50', name: 'Artífice Lendário', desc: 'Some 50 níveis de maestria.', icon: '/icons/crown.svg', category: 'Artífice', req: (s) => totalMasteryLevels(s) >= 50 },
+];
+
+/** Goblins que aparecem na taverna sugando jogadores. */
+const pestAchievements: AchievementData[] = [
+  { id: 'pest1', name: 'Goblin Fora', desc: 'Expulse o primeiro goblin da taverna.', icon: '/icons/goblin.svg', category: 'Geral', req: (s) => s.pestsExpelled >= 1 },
+  { id: 'pest10', name: 'Caça-Goblins', desc: 'Expulse 10 goblins da taverna.', icon: '/icons/shield.svg', category: 'Geral', req: (s) => s.pestsExpelled >= 10 },
+  { id: 'pest50', name: 'Taverna Limpa', desc: 'Expulse 50 goblins da taverna.', icon: '/icons/trophy.svg', category: 'Geral', req: (s) => s.pestsExpelled >= 50 },
+];
+
 const editorialAchievements: AchievementData[] = [
   { id: 'editorial1', name: 'Primeiro Contrato', desc: 'Compre o primeiro nó da Árvore da Editora.', icon: '/icons/scroll.svg', category: 'Editora', req: (s) => s.editorialUpgrades.length >= 1 },
   { id: 'editorial5', name: 'Editora de Verdade', desc: 'Compre 5 nós da Árvore da Editora.', icon: '/icons/gear.svg', category: 'Editora', req: (s) => s.editorialUpgrades.length >= 5 },
@@ -1643,6 +1661,8 @@ export const achievementsData: AchievementData[] = [
   ...synergyAchievements,
   ...bossAchievements,
   ...editorialAchievements,
+  ...masteryAchievements,
+  ...pestAchievements,
 ];
 
 export const goldenEffects: GoldenEffect[] = [

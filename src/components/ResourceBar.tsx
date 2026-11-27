@@ -53,6 +53,18 @@ export default function ResourceBar({ state, onOpen, savedAt }: Props) {
           <img src="/icons/dice.svg" alt="" className="game-icon" /> Dados
           <span className="die-tag">{getEquippedDie(state).label}</span>
         </button>
+        <button
+          type="button"
+          className="icon-btn"
+          onClick={() => onOpen('artifice')}
+          title={`Dados de Artífice (${state.artificerDice} disponíveis)`}
+          aria-label="Dados de Artífice"
+        >
+          <img src="/icons/artificer.svg" alt="" className="game-icon" />
+          {state.artificerDice > 0 ? (
+            <span className="icon-btn-badge artificer">{state.artificerDice}</span>
+          ) : null}
+        </button>
         <button type="button" className="btn btn-danger" onClick={() => onOpen('prestige')}>
           <img src="/icons/fate.svg" alt="" className="game-icon" /> Prestígio
         </button>

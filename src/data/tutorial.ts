@@ -56,6 +56,10 @@ export const tutorialSteps: TutorialStep[] = [
     text: 'De 4 em 4 minutos um chefe aparece por 45 segundos: cada Atacar causa dano com combo crescente e a vitória paga 3 minutos de produção, +2 Destino e produção x3 por 30s.',
   },
   {
+    title: 'Goblins na Taverna',
+    text: 'De tempos em tempos um goblin se gruda na tela e suga 10% da produção de jogadores. Clique nele 5 vezes: o baú paga ouro e dados conforme o tempo que ele ficou ali, e às vezes traz um Dado de Artífice.',
+  },
+  {
     title: 'Dados e o D20',
     modal: 'minigame',
     target: '.modal',
@@ -92,10 +96,16 @@ export const tutorialSteps: TutorialStep[] = [
     text: 'Cada publicação rende 3 pontos para gastar aqui, em 10 nós permanentes de três ramos. Economia multiplica recursos, Destino melhora resets e Mesas ao Vivo, e Início dá vantagem em cada nova campanha.',
   },
   {
+    title: 'Dados de Artífice',
+    modal: 'artifice',
+    target: '.modal',
+    text: 'Um Dado de Artífice chega a cada 12 horas de jogo. Gaste na maestria de uma construção: cada nível dobra a produção dela (até 5 níveis) e nunca se perde em resets.',
+  },
+  {
     title: 'Conquistas',
     modal: 'achievements',
     target: '.modal',
-    text: 'São 362 conquistas, cada uma valendo +2% de produção permanente. Use as abas por categoria, a busca e o filtro de bloqueadas para caçar as que faltam.',
+    text: 'São 368 conquistas, cada uma valendo +2% de produção permanente. Use as abas por categoria, a busca e o filtro de bloqueadas para caçar as que faltam.',
   },
   {
     title: 'Estatísticas',

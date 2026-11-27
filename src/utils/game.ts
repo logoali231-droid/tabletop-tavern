@@ -22,6 +22,7 @@ import {
   GameState,
   GardenPlot,
   GoldenEffect,
+  Pest,
   Production,
   ResourceType,
   SeedData,
@@ -66,6 +67,22 @@ export const BOSS_MIN_PLAYERS = 5000;
 export const BOSS_COMBO_STEP = 0.08;
 /** Upper bound for one "Max" purchase, so the loop stays cheap. */
 const MAX_BULK_BUY = 1000;
+/** Dado de Artífice a cada 12 horas de jogo: raro, passivo e nunca perdido. */
+export const ARTIFICER_INTERVAL_SECONDS = 12 * 3600;
+/** Cada nível de maestria dobra a produção da construção, para sempre. */
+export const MASTERY_MULTIPLIER = 2;
+export const ARTIFICER_MAX_MASTERY = 5;
+/** Cliques para expulsar o goblin e quanto ele suga da produção de jogadores. */
+export const PEST_CLICKS = 5;
+export const PEST_PLAYERS_PENALTY = 0.1;
+export const PEST_FIRST_DELAY = 120000;
+export const PEST_INTERVAL_MIN = 150000;
+export const PEST_INTERVAL_MAX = 300000;
+export const PEST_MIN_PLAYERS = 1000;
+/** O baú do goblin para de crescer depois de 10 minutos. */
+export const PEST_MAX_REWARD_MINUTES = 10;
+/** Chance de o baú do goblin trazer um Dado de Artífice. */
+export const PEST_ARTIFICER_CHANCE = 0.15;
 
 export const RESOURCES: { id: ResourceType; label: string; short: string; icon: string }[] = [
   { id: 'players', label: 'Jogadores', short: 'Jogadores', icon: '/icons/players.svg' },
@@ -111,6 +128,8 @@ export function createInitialState(): GameState {
     campaigns: 0, campaignMultiplier: 1, prestigeUpgradesBought: [],
     bossesDefeated: 0,
     legends: 0, publications: 0, publicationsEarned: 0, editorialUpgrades: [],
+    artificerDice: 0, artificerEarned: 0, masteryLevels: {},
+    pest: null, pestsExpelled: 0,
     achievements: [],
     goldenDiceCollected: 0,
     diceRolls: 0,
@@ -229,7 +248,7 @@ export function getBuildingOutput(state: GameState, building: BuildingData): Par
   const count = state.buildings[building.id] ?? 0;
   if (count <= 0) return {};
   const buildingMult = state.buildingMultipliers[building.id] ?? 1;
-  const mult = getProdMultiplier(state) * count * buildingMult;
+  const mult = getProdMultiplier(state) * count * buildingMult * getMasteryMultiplier(state, building.id);
   const output: Partial<Production> = {};
   for (const [resource, amount] of Object.entries(building.yield)) {
     output[resource as ResourceType] = (amount ?? 0) * mult;
@@ -246,6 +265,7 @@ export function getProduction(state: GameState): Production {
     }
   }
   total.players *= getEditoraPlayersBonus(state);
+  total.players *= getPestPenalty(state);
   total.gold *= getEditoraGoldBonus(state);
   total.dice *= getEditoraDiceBonus(state);
   total.inspiration *= getStudioInspiration(state);
@@ -423,6 +443,11 @@ export function prestigeReset(state: GameState): GameState {
     publications: state.publications,
     publicationsEarned: state.publicationsEarned,
     editorialUpgrades: [...state.editorialUpgrades],
+    // Maestria e Dados de Artífice são permanentes, como as Lendas.
+    artificerDice: state.artificerDice,
+    artificerEarned: state.artificerEarned,
+    masteryLevels: { ...state.masteryLevels },
+    pestsExpelled: state.pestsExpelled,
     achievements: [...state.achievements],
     diceSet: [...state.diceSet],
     equippedDie: state.equippedDie,
@@ -477,6 +502,10 @@ export function publishReset(state: GameState): GameState {
     publications: state.publications + PUBLICATIONS_PER_PUBLISH,
     publicationsEarned: state.publicationsEarned + 1,
     editorialUpgrades: [...state.editorialUpgrades],
+    artificerDice: state.artificerDice,
+    artificerEarned: state.artificerEarned,
+    masteryLevels: { ...state.masteryLevels },
+    pestsExpelled: state.pestsExpelled,
     bossesDefeated: state.bossesDefeated,
     achievements: [...state.achievements],
     diceSet: [...state.diceSet],
@@ -925,7 +954,8 @@ export function tryHarvestPlot(
 /* ------------------------------------------------------------------ */
 
 export function serializeSave(state: GameState): string {
-  return JSON.stringify({ ...state, activeBoosts: [], lastSeen: Date.now() });
+  // Boosts e pestes são de sessão: um goblin não deve reaparecer no save.
+  return JSON.stringify({ ...state, activeBoosts: [], pest: null, lastSeen: Date.now() });
 }
 
 export function saveGame(state: GameState): void {
@@ -971,6 +1001,18 @@ function countRecord(value: unknown): Record<string, number> {
     if (amount > 0) counts[key] = amount;
   }
   return counts;
+}
+
+/** Maestria aceita só construções existentes e nunca passa do nível máximo. */
+function masteryRecord(value: unknown): Record<string, number> {
+  if (!value || typeof value !== 'object') return {};
+  const levels: Record<string, number> = {};
+  for (const [key, raw] of Object.entries(value as Record<string, unknown>)) {
+    if (!buildingsData.some((building) => building.id === key)) continue;
+    const level = Math.min(ARTIFICER_MAX_MASTERY, Math.max(0, Math.floor(finite(raw))));
+    if (level > 0) levels[key] = level;
+  }
+  return levels;
 }
 
 function multiplierRecord(value: unknown): Record<string, number> {
@@ -1035,6 +1077,11 @@ export function normalizeSave(raw: unknown): GameState | null {
     publicationsEarned: publicationsEarned(parsed),
     editorialUpgrades: stringArray(parsed.editorialUpgrades)
       .filter((id) => editorialData.some((node) => node.id === id)),
+    artificerDice: Math.max(0, Math.floor(finite(parsed.artificerDice))),
+    artificerEarned: Math.max(0, Math.floor(finite(parsed.artificerEarned))),
+    masteryLevels: masteryRecord(parsed.masteryLevels),
+    pest: null,
+    pestsExpelled: Math.max(0, Math.floor(finite(parsed.pestsExpelled))),
     achievements: stringArray(parsed.achievements),
     goldenDiceCollected: finite(parsed.goldenDiceCollected),
     diceRolls: finite(parsed.diceRolls),
@@ -1101,7 +1148,7 @@ export function loadGame(): { state: GameState; offline: OfflineReport | null } 
     if (offline) {
       for (const resource of RESOURCE_IDS) addResource(state, resource, offline.gains[resource]);
     }
-    return { state: applyAchievements(state), offline };
+    return { state: applyAchievements(grantArtificerDice(state)), offline };
   } catch {
     return { state: base, offline: null };
   }
@@ -1249,4 +1296,122 @@ export function tryBuyEditorial(state: GameState, id: string): GameState | null 
     publications: state.publications - node.cost,
     editorialUpgrades: [...state.editorialUpgrades, id],
   });
+}
+
+/* ------------------------------------------------------------------ */
+/* Dados de Artífice e maestria de construções                         */
+/* ------------------------------------------------------------------ */
+
+export function getMasteryLevel(state: GameState, buildingId: string): number {
+  return state.masteryLevels[buildingId] ?? 0;
+}
+
+/** Each mastery level doubles that building's output, forever. */
+export function getMasteryMultiplier(state: GameState, buildingId: string): number {
+  return Math.pow(MASTERY_MULTIPLIER, getMasteryLevel(state, buildingId));
+}
+
+/** Mastery costs one die for level 1, two for level 2, and so on. */
+export function getMasteryCost(level: number): number {
+  return level + 1;
+}
+
+export function getTotalMasteryLevels(state: GameState): number {
+  return Object.values(state.masteryLevels).reduce((sum, level) => sum + level, 0);
+}
+
+/** Marcos de 12h que o tempo de jogo já pagou. */
+export function getArtificerDiceDue(state: GameState): number {
+  return Math.floor(state.playTime / ARTIFICER_INTERVAL_SECONDS);
+}
+
+/** Segundos até o próximo Dado de Artífice. */
+export function getArtificerNextIn(state: GameState): number {
+  const nextAt = (state.artificerEarned + 1) * ARTIFICER_INTERVAL_SECONDS;
+  return Math.max(0, nextAt - state.playTime);
+}
+
+/** Pays every clock milestone the player has passed since the last check. */
+export function grantArtificerDice(state: GameState): GameState {
+  const due = getArtificerDiceDue(state);
+  if (due <= state.artificerEarned) return state;
+  const gained = due - state.artificerEarned;
+  return {
+    ...state,
+    artificerDice: state.artificerDice + gained,
+    artificerEarned: due,
+  };
+}
+
+/** Spends Artífice dice on one permanent mastery level of an owned building. */
+export function tryBuyMastery(state: GameState, buildingId: string): GameState | null {
+  if (!buildingsData.some((building) => building.id === buildingId)) return null;
+  if ((state.buildings[buildingId] ?? 0) < 1) return null;
+  const level = getMasteryLevel(state, buildingId);
+  if (level >= ARTIFICER_MAX_MASTERY) return null;
+  const cost = getMasteryCost(level);
+  if (state.artificerDice < cost) return null;
+
+  return applyAchievements({
+    ...state,
+    artificerDice: state.artificerDice - cost,
+    masteryLevels: { ...state.masteryLevels, [buildingId]: level + 1 },
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* Goblins na Taverna (pestes)                                         */
+/* ------------------------------------------------------------------ */
+
+/** Multiplier the goblin applies to players production while it sits there. */
+export function getPestPenalty(state: GameState): number {
+  return state.pest ? 1 - PEST_PLAYERS_PENALTY : 1;
+}
+
+export function nextPestDelay(random: () => number = Math.random): number {
+  return PEST_INTERVAL_MIN + random() * (PEST_INTERVAL_MAX - PEST_INTERVAL_MIN);
+}
+
+export interface PestReward {
+  gold: number;
+  dice: number;
+  artificerDice: number;
+}
+
+/** Baú que o goblin deixa: paga pelo tempo em que ficou sugando a taverna. */
+export function pestReward(
+  state: GameState,
+  pest: Pest,
+  now = Date.now(),
+  random: () => number = Math.random,
+): PestReward {
+  const seconds = Math.max(0, (now - pest.spawnedAt) / 1000);
+  const minutes = Math.min(PEST_MAX_REWARD_MINUTES, Math.max(1, seconds / 60));
+  const production = getProduction(state);
+  return {
+    gold: Math.max(150 * minutes, production.gold * 120 * (minutes / 3)),
+    dice: Math.max(12 * minutes, production.dice * 120 * (minutes / 3)),
+    artificerDice: random() < PEST_ARTIFICER_CHANCE ? 1 : 0,
+  };
+}
+
+/** Removes the goblin and pays the chest it was carrying. */
+export function expelPest(
+  state: GameState,
+  now = Date.now(),
+  random: () => number = Math.random,
+): { state: GameState; reward: PestReward } | null {
+  const pest = state.pest;
+  if (!pest) return null;
+
+  const reward = pestReward(state, pest, now, random);
+  const next: GameState = {
+    ...state,
+    pest: null,
+    pestsExpelled: state.pestsExpelled + 1,
+    artificerDice: state.artificerDice + reward.artificerDice,
+  };
+  addResource(next, 'gold', reward.gold);
+  addResource(next, 'dice', reward.dice);
+  return { state: applyAchievements(next), reward };
 }

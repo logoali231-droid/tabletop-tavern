@@ -1779,3 +1779,150 @@ h1, h2, h3, h4 { font-family: 'Cinzel', serif; letter-spacing: 0.3px; }
   .editora-grid { grid-template-columns: 1fr; }
   .editora-summary { grid-template-columns: 1fr 1fr; }
 }
+
+/* ---------- Dados de Artífice ---------- */
+.icon-btn-badge.artificer { background: var(--success); }
+
+.artifice-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.artifice-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+}
+
+.artifice-stat span {
+  font-size: 0.66rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.artifice-stat strong { font-size: 1.1rem; color: var(--gold); }
+
+.artifice-list { display: flex; flex-direction: column; gap: 6px; }
+
+.artifice-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: #20160d;
+}
+
+.artifice-row.mastered { border-color: rgba(233, 196, 106, 0.55); background: rgba(233, 196, 106, 0.08); }
+
+.artifice-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+
+.artifice-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.artifice-mult { font-size: 0.7rem; font-weight: 700; color: var(--gold); }
+
+.artifice-pips { display: flex; align-items: center; gap: 3px; }
+
+.artifice-pip {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: transparent;
+}
+
+.artifice-pip.on { background: var(--gold); border-color: var(--gold); }
+
+.artifice-level { margin-left: 6px; font-size: 0.64rem; color: var(--text-dim); }
+
+.artifice-buy { padding: 6px 10px; font-size: 0.7rem; white-space: nowrap; }
+
+.artifice-maxed {
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--gold);
+  white-space: nowrap;
+}
+
+/* ---------- Goblins na Taverna ---------- */
+.pest-wrap {
+  position: fixed;
+  right: 18px;
+  bottom: 58px;
+  z-index: 8600;
+}
+
+.pest-goblin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 10px;
+  border: 2px solid #6bbf59;
+  border-radius: 14px;
+  background: radial-gradient(circle at 40% 22%, #29441f, #16220f);
+  box-shadow: 0 0 26px rgba(107, 191, 89, 0.45);
+  cursor: pointer;
+  animation: pestBob 1.7s ease-in-out infinite alternate;
+  transition: transform 0.1s;
+}
+
+.pest-goblin:hover { transform: scale(1.05); }
+.pest-goblin:active { transform: scale(0.93); }
+
+.pest-goblin img {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  filter: invert(0.9) sepia(0.5) saturate(2) hue-rotate(50deg);
+}
+
+.pest-pips { display: flex; gap: 3px; }
+
+.pest-pip {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1px solid #a9d694;
+  background: transparent;
+}
+
+.pest-pip.on { background: #a9d694; }
+
+.pest-label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: #b7e2a4;
+  white-space: nowrap;
+}
+
+@keyframes pestBob {
+  from { transform: translateY(0) rotate(-2deg); }
+  to { transform: translateY(-6px) rotate(2deg); }
+}
+
+@media (max-width: 760px) {
+  .artifice-summary { grid-template-columns: 1fr 1fr; }
+  .pest-wrap { right: 10px; bottom: 54px; }
+}
+
+@media (max-width: 640px) {
+  .pest-wrap.raised { bottom: 236px; }
+}

@@ -7,11 +7,18 @@ import {
   BOSS_FIRST_DELAY,
   BOSS_MIN_PLAYERS,
   LEGACY_SAVE_KEY,
+  PEST_CLICKS,
+  PEST_FIRST_DELAY,
+  PEST_MIN_PLAYERS,
   RESOURCE_IDS,
   SAVE_KEY,
   addResource,
   applyBossVictory,
+  expelPest,
+  grantArtificerDice,
+  nextPestDelay,
   tryBuyEditorial,
+  tryBuyMastery,
   affordableUpgrades,
   applyAchievements,
   applyDiceRoll,
@@ -68,6 +75,8 @@ import DiceMinigame from './components/DiceMiniGame';
 import GoldenDice from './components/GoldenDice';
 import BossFight from './components/BossFight';
 import EditoraModal from './components/EditoraModal';
+import ArtificeModal from './components/ArtificeModal';
+import GoblinPest from './components/GoblinPest';
 import NewsTicker from './components/NewsTicker';
 import OfflineModal from './components/OfflineModal';
 import GardenModal from './components/GardenModal';
@@ -133,6 +142,7 @@ export default function App() {
   const stormQueue = useRef<number[]>([]);
   const bossRef = useRef<BossEncounter | null>(null);
   const nextBossAt = useRef(Date.now() + BOSS_FIRST_DELAY * 1000);
+  const nextPestAt = useRef(Date.now() + PEST_FIRST_DELAY);
   const modalRef = useRef<ModalId | null>(null);
   const tutorialRef = useRef<number | null>(null);
 
@@ -187,6 +197,7 @@ export default function App() {
     bossRef.current = null;
     setBoss(null);
     nextBossAt.current = Date.now() + nextBossDelay();
+    nextPestAt.current = Date.now() + PEST_FIRST_DELAY;
   };
 
   const pushToast = useCallback((toast: Omit<Toast, 'id'>) => {
@@ -236,6 +247,23 @@ export default function App() {
     return () => window.clearInterval(interval);
   }, [pushToast]);
 
+  /* ---------------- Goblins na Taverna (pestes) ---------------- */
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      // Like the boss clock, a pest never spawns behind a panel or the tour.
+      if (modalRef.current !== null || tutorialRef.current !== null) return;
+      const current = stateRef.current;
+      if (current.pest || current.playersEarned < PEST_MIN_PLAYERS) return;
+      if (Date.now() < nextPestAt.current) return;
+
+      setState((previous) => (previous.pest
+        ? previous
+        : { ...previous, pest: { spawnedAt: Date.now(), clicks: 0 } }));
+      nextPestAt.current = Date.now() + nextPestDelay();
+    }, 1000);
+    return () => window.clearInterval(interval);
+  }, []);
+
   /* ---------------- game loop ---------------- */
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -253,7 +281,7 @@ export default function App() {
         for (const resource of RESOURCE_IDS) {
           addResource(next, resource, production[resource] * 0.1);
         }
-        return applyAchievements(next);
+        return applyAchievements(grantArtificerDice(next));
       });
     }, 100);
     return () => window.clearInterval(interval);
@@ -494,6 +522,38 @@ export default function App() {
     setState(next);
   };
 
+  const buyMastery = (id: string) => {
+    const next = tryBuyMastery(stateRef.current, id);
+    if (!next) return;
+    playSound('upgrade', stateRef.current.soundOn);
+    setState(next);
+  };
+
+  const hitPest = () => {
+    const current = stateRef.current;
+    if (!current.pest) return;
+    playSound('click', current.soundOn);
+
+    if (current.pest.clicks + 1 < PEST_CLICKS) {
+      setState({
+        ...current,
+        pest: { ...current.pest, clicks: current.pest.clicks + 1 },
+      });
+      return;
+    }
+
+    const result = expelPest(current);
+    if (!result) return;
+    setState(result.state);
+    playSound('golden', current.soundOn);
+    pushToast({
+      title: 'Goblin expulso',
+      desc: `Baú: +${formatNumber(result.reward.gold)} ouro, +${formatNumber(result.reward.dice)} dados`
+        + (result.reward.artificerDice > 0 ? ' e +1 Dado de Artífice!' : '.'),
+      icon: '/icons/goblin.svg',
+    });
+  };
+
   const buyStudio = (id: string) => {
     const next = tryBuyStudio(stateRef.current, id);
     if (!next) return;
@@ -694,6 +754,8 @@ export default function App() {
 
       {boss ? <BossFight boss={boss} state={state} onHit={hitBoss} /> : null}
 
+      {state.pest ? <GoblinPest pest={state.pest} onHit={hitPest} raised={boss !== null} /> : null}
+
       {modal === 'garden' ? (
         <GardenModal
           state={state}
@@ -729,6 +791,10 @@ export default function App() {
 
       {modal === 'editora' ? (
         <EditoraModal state={state} onBuy={buyEditorial} onClose={() => setModal('publish')} />
+      ) : null}
+
+      {modal === 'artifice' ? (
+        <ArtificeModal state={state} onBuy={buyMastery} onClose={() => setModal(null)} />
       ) : null}
 
       {modal === 'minigame' ? (

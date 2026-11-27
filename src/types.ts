@@ -2,7 +2,7 @@ export type ResourceType = 'players' | 'gold' | 'dice' | 'inspiration' | 'fate';
 
 export type BuyAmount = 1 | 10 | 100 | 'max';
 
-export type ModalId = 'prestige' | 'publish' | 'editora' | 'minigame' | 'achievements' | 'stats' | 'settings' | 'garden' | 'studio' | 'help';
+export type ModalId = 'prestige' | 'publish' | 'editora' | 'artifice' | 'minigame' | 'achievements' | 'stats' | 'settings' | 'garden' | 'studio' | 'help';
 
 export type Production = Record<ResourceType, number>;
 
@@ -80,6 +80,16 @@ export interface GameState {
   publicationsEarned: number;
   /** Bought Editora tree nodes, permanent. */
   editorialUpgrades: string[];
+  /** Saldo de Dados de Artífice, a moeda rara que paga maestria de construção. */
+  artificerDice: number;
+  /** Marcos de 12h já pagos pelo relógio de jogo, para não pagar duas vezes. */
+  artificerEarned: number;
+  /** Níveis de maestria por construção: cada nível dobra a produção dela, para sempre. */
+  masteryLevels: Record<string, number>;
+  /** Goblin sugando a produção agora; null quando a taverna está limpa. */
+  pest: Pest | null;
+  /** Goblins expulsos na vida, permanente como as conquistas. */
+  pestsExpelled: number;
   achievements: string[];
   goldenDiceCollected: number;
   diceRolls: number;
@@ -155,6 +165,7 @@ export type AchievementCategory =
   | 'Dados'
   | 'Estúdio'
   | 'Editora'
+  | 'Artífice'
   | 'Sinergias';
 
 export interface AchievementData {
@@ -206,6 +217,12 @@ export interface BossEncounter extends BossTemplate {
   maxHp: number;
   timeLeft: number;
   combo: number;
+}
+
+/** A goblin pest stuck to the tavern, draining players until it is clicked away. */
+export interface Pest {
+  spawnedAt: number;
+  clicks: number;
 }
 
 export type EditorialBranch = 'Economia' | 'Destino' | 'Início';

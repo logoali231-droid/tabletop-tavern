@@ -70,8 +70,8 @@ export const helpSections: HelpSection[] = [
     title: 'Conquistas e fama',
     icon: '/icons/trophy.svg',
     items: [
-      { label: '362 conquistas', text: 'Cada conquista dá +2% de produção permanente (ou +4% com a bênção Fama Dobrada). Elas nunca são perdidas em resets.' },
-      { label: 'Categorias', text: 'O navegador separa Geral, Construções, Prestígio, Editora, Sinergias, Grimório, Dados e Estúdio, com busca sem acento, filtro de bloqueadas e barra de progresso.' },
+      { label: '368 conquistas', text: 'Cada conquista dá +2% de produção permanente (ou +4% com a bênção Fama Dobrada). Elas nunca são perdidas em resets.' },
+      { label: 'Categorias', text: 'O navegador separa Geral, Construções, Prestígio, Editora, Artífice, Sinergias, Grimório, Dados e Estúdio, com busca sem acento, filtro de bloqueadas e barra de progresso.' },
       { label: 'Marcos', text: 'Cada construção tem 6 marcos (até 1.000 unidades) e o Estúdio rende 9 conquistas próprias.' },
       { label: 'Sinergias', text: 'Conjuntos temáticos de construções (Mesa Posta, Arsenal Arcano, Corte Feérica...) dão bônus global permanente enquanto você tiver pelo menos uma de cada.' },
     ],
@@ -149,6 +149,28 @@ export const helpSections: HelpSection[] = [
       { label: 'Os três ramos', text: 'Economia (produção global, ouro, dados e jogadores), Destino (+20% Destino, Mesas ao Vivo melhores, +1 Lenda por publicação) e Início (recursos iniciais, produção x3 por 90s e +1 página no Grimório).' },
       { label: 'Permanência', text: 'Os 10 nós são comprados uma vez e valem para sempre, inclusive depois de publicar outra saga. Não há reset que os remova.' },
       { label: 'Conquistas', text: 'Comprar 1, 5 e os 10 nós rende três conquistas na aba Editora.' },
+    ],
+  },
+  {
+    id: 'artifice',
+    title: 'Dados de Artífice e maestria',
+    icon: '/icons/artificer.svg',
+    items: [
+      { label: 'Como consegue', text: 'Um Dado de Artífice é pago a cada 12 horas de jogo. É um recurso passivo e raro: o relógio só anda com o jogo aberto, e o painel mostra quanto falta para o próximo.' },
+      { label: 'O que compra', text: 'Cada dado compra um nível de maestria numa construção que você já possui. Cada nível dobra a produção daquela construção: 1 nível = x2, 2 níveis = x4, e assim até 5 níveis (x32).' },
+      { label: 'Custo crescente', text: 'O nível 1 custa 1 dado, o 2 custa 2, o 3 custa 3, o 4 custa 4 e o 5 custa 5 — 15 dados para levar uma construção até a maestria máxima.' },
+      { label: 'Permanente', text: 'Maestria e saldo de dados sobrevivem a campanhas, publicações, importação de save e a qualquer reset. Os goblins também podem deixar um Dado de Artífice no baú.' },
+    ],
+  },
+  {
+    id: 'pestes',
+    title: 'Goblins na Taverna (pestes)',
+    icon: '/icons/goblin.svg',
+    items: [
+      { label: 'Aparecimento', text: 'Depois dos primeiros mil jogadores, um goblin aparece a cada 2,5–5 minutos e fica grudado no canto da tela. Fechar um painel ou abrir o tutorial pausa o aparecimento.' },
+      { label: 'O que ele faz', text: 'Enquanto o goblin estiver ali, a produção passiva de jogadores cai 10%. Nada mais é afetado e nenhum progresso é perdido.' },
+      { label: 'Como expulsar', text: 'Clique no goblin 5 vezes. Os pontinhos mostram o quanto falta; ao expulsar, ele deixa um baú de ouro e dados proporcional ao tempo que ficou (até 10 minutos), com 15% de chance de vir um Dado de Artífice.' },
+      { label: 'Conquistas', text: 'Expulsar 1, 10 e 50 goblins rende três conquistas, e o contador é permanente.' },
     ],
   },
   {

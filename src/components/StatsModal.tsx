@@ -7,6 +7,7 @@ import {
   getFameBonus,
   getProdMultiplier,
   getProduction,
+  getTotalMasteryLevels,
 } from '../utils/game';
 import { formatNumber, formatRate, formatTime } from '../utils/format';
 import Modal from './Modal';
@@ -46,6 +47,9 @@ export default function StatsModal({ state, onClose }: Props) {
           <Row label="Pontos da Editora" value={formatNumber(state.publications)} />
           <Row label="Nós da Editora" value={formatNumber(state.editorialUpgrades.length)} />
           <Row label="Lendas" value={formatNumber(state.legends)} />
+          <Row label="Dados de Artífice" value={formatNumber(state.artificerDice)} />
+          <Row label="Níveis de maestria" value={formatNumber(getTotalMasteryLevels(state))} />
+          <Row label="Goblins expulsos" value={formatNumber(state.pestsExpelled)} />
         </section>
 
         <section className="stat-section">

@@ -11,7 +11,7 @@ interface Props {
 
 type Tab = 'Tudo' | AchievementCategory;
 
-const TABS: Tab[] = ['Tudo', 'Geral', 'Construções', 'Prestígio', 'Editora', 'Grimório', 'Dados', 'Estúdio'];
+const TABS: Tab[] = ['Tudo', 'Geral', 'Construções', 'Prestígio', 'Editora', 'Artífice', 'Grimório', 'Dados', 'Estúdio'];
 
 /** Accent-insensitive, so "construcoes" still finds "Construções". */
 function normalize(text: string) {
