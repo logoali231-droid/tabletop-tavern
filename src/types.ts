@@ -2,7 +2,7 @@ export type ResourceType = 'players' | 'gold' | 'dice' | 'inspiration' | 'fate';
 
 export type BuyAmount = 1 | 10 | 100 | 'max';
 
-export type ModalId = 'prestige' | 'publish' | 'minigame' | 'achievements' | 'stats' | 'settings' | 'garden' | 'studio';
+export type ModalId = 'prestige' | 'publish' | 'minigame' | 'achievements' | 'stats' | 'settings' | 'garden' | 'studio' | 'help';
 
 export type Production = Record<ResourceType, number>;
 

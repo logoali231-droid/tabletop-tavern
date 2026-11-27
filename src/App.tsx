@@ -63,6 +63,9 @@ import NewsTicker from './components/NewsTicker';
 import OfflineModal from './components/OfflineModal';
 import GardenModal from './components/GardenModal';
 import StudioModal from './components/StudioModal';
+import HelpModal from './components/HelpModal';
+import Tutorial from './components/Tutorial';
+import { TUTORIAL_KEY, tutorialSteps } from './data/tutorial';
 
 interface Particle {
   id: number;
@@ -102,6 +105,13 @@ export default function App() {
   const [golden, setGolden] = useState<GoldenSpawn | null>(null);
   const [saveText, setSaveText] = useState('');
   const [savedAt, setSavedAt] = useState(Date.now());
+  const [tutorialStep, setTutorialStep] = useState<number | null>(() => {
+    try {
+      return localStorage.getItem(TUTORIAL_KEY) === 'done' ? null : 0;
+    } catch {
+      return 0;
+    }
+  });
 
   const stateRef = useRef(state);
   const particleId = useRef(0);
@@ -115,6 +125,36 @@ export default function App() {
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
+
+  /* ---------------- guided tour ---------------- */
+  useEffect(() => {
+    if (tutorialStep === null) return;
+    setModal(tutorialSteps[tutorialStep]?.modal ?? null);
+  }, [tutorialStep]);
+
+  const finishTutorial = () => {
+    try {
+      localStorage.setItem(TUTORIAL_KEY, 'done');
+    } catch {
+      /* storage blocked: the tour simply returns on the next visit */
+    }
+    setTutorialStep(null);
+    setModal(null);
+  };
+
+  const tutorialNext = () => {
+    if (tutorialStep === null) return;
+    if (tutorialStep + 1 >= tutorialSteps.length) {
+      finishTutorial();
+      return;
+    }
+    setTutorialStep(tutorialStep + 1);
+  };
+
+  const tutorialPrev = () => {
+    if (tutorialStep === null || tutorialStep === 0) return;
+    setTutorialStep(tutorialStep - 1);
+  };
 
   const pushToast = useCallback((toast: Omit<Toast, 'id'>) => {
     const id = toastId.current + 1;
@@ -602,8 +642,27 @@ export default function App() {
         />
       ) : null}
 
+      {modal === 'help' ? (
+        <HelpModal
+          onStartTutorial={() => {
+            setModal(null);
+            setTutorialStep(0);
+          }}
+          onClose={() => setModal(null)}
+        />
+      ) : null}
+
       {offlineReport ? (
         <OfflineModal report={offlineReport} onClose={() => setOfflineReport(null)} />
+      ) : null}
+
+      {tutorialStep !== null && tutorialSteps[tutorialStep] ? (
+        <Tutorial
+          step={tutorialStep}
+          onNext={tutorialNext}
+          onPrev={tutorialPrev}
+          onClose={finishTutorial}
+        />
       ) : null}
 
     </div>

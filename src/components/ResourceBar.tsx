@@ -89,6 +89,15 @@ export default function ResourceBar({ state, onOpen, savedAt }: Props) {
         </button>
         <button
           type="button"
+          className="icon-btn help-btn"
+          onClick={() => onOpen('help')}
+          title="Ajuda e tutorial"
+          aria-label="Ajuda e tutorial"
+        >
+          <span className="help-mark">?</span>
+        </button>
+        <button
+          type="button"
           className="icon-btn"
           onClick={() => onOpen('settings')}
           title="Opções"
