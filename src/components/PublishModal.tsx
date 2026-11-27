@@ -56,7 +56,7 @@ export default function PublishModal({ state, onPublish, onClose }: Props) {
           <strong className="prestige-big">{formatNumber(state.campaigns)}</strong>
           <span className="prestige-note">
             {missingCampaigns > 0
-              ? `Faltam ${missingCampaigns} campanha(s) para desbloquear a publicação.`
+              ? `Faltam ${missingCampaigns} ${missingCampaigns === 1 ? 'campanha' : 'campanhas'} para desbloquear a publicação.`
               : `1 Lenda a cada ${CAMPAIGNS_PER_LEGEND} campanhas · faltam ${untilNextLegend} para a próxima.`}
           </span>
         </div>
