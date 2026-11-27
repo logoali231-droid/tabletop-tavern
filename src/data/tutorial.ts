@@ -86,10 +86,16 @@ export const tutorialSteps: TutorialStep[] = [
     text: 'A segunda camada: com 10 campanhas você publica a saga e ganha Lendas. Cada 5 campanhas valem 1 Lenda, e cada Lenda dá +5% produção e +5% Destino, para sempre.',
   },
   {
+    title: 'Árvore da Editora',
+    modal: 'editora',
+    target: '.modal',
+    text: 'Cada publicação rende 3 pontos para gastar aqui, em 10 nós permanentes de três ramos. Economia multiplica recursos, Destino melhora resets e Mesas ao Vivo, e Início dá vantagem em cada nova campanha.',
+  },
+  {
     title: 'Conquistas',
     modal: 'achievements',
     target: '.modal',
-    text: 'São 288 conquistas, cada uma valendo +2% de produção permanente. Use as abas por categoria, a busca e o filtro de bloqueadas para caçar as que faltam.',
+    text: 'São 362 conquistas, cada uma valendo +2% de produção permanente. Use as abas por categoria, a busca e o filtro de bloqueadas para caçar as que faltam.',
   },
   {
     title: 'Estatísticas',

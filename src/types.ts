@@ -2,7 +2,7 @@ export type ResourceType = 'players' | 'gold' | 'dice' | 'inspiration' | 'fate';
 
 export type BuyAmount = 1 | 10 | 100 | 'max';
 
-export type ModalId = 'prestige' | 'publish' | 'minigame' | 'achievements' | 'stats' | 'settings' | 'garden' | 'studio' | 'help';
+export type ModalId = 'prestige' | 'publish' | 'editora' | 'minigame' | 'achievements' | 'stats' | 'settings' | 'garden' | 'studio' | 'help';
 
 export type Production = Record<ResourceType, number>;
 
@@ -74,7 +74,12 @@ export interface GameState {
   bossesDefeated: number;
   /** Second prestige layer: permanent Lendas, each one a permanent bonus. */
   legends: number;
+  /** Spendable Editora points: each published saga grants a few. */
   publications: number;
+  /** Sagas published, lifetime; achievements count this, so spending never regresses them. */
+  publicationsEarned: number;
+  /** Bought Editora tree nodes, permanent. */
+  editorialUpgrades: string[];
   achievements: string[];
   goldenDiceCollected: number;
   diceRolls: number;
@@ -201,4 +206,16 @@ export interface BossEncounter extends BossTemplate {
   maxHp: number;
   timeLeft: number;
   combo: number;
+}
+
+export type EditorialBranch = 'Economia' | 'Destino' | 'Início';
+
+export interface EditorialUpgradeData {
+  id: string;
+  name: string;
+  icon: string;
+  desc: string;
+  /** Cost in Editora points (state.publications). */
+  cost: number;
+  branch: EditorialBranch;
 }

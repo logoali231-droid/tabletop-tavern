@@ -1703,3 +1703,79 @@ h1, h2, h3, h4 { font-family: 'Cinzel', serif; letter-spacing: 0.3px; }
 @media (max-width: 640px) {
   .boss-card { left: 10px; right: 10px; bottom: 10px; width: auto; }
 }
+
+/* ---------- Árvore da Editora ---------- */
+.editora-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.editora-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+}
+
+.editora-stat span {
+  font-size: 0.66rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.editora-stat strong { font-size: 1.1rem; color: var(--gold); }
+
+.editora-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.editora-branch h3 { font-size: 0.9rem; color: var(--text-highlight); }
+.editora-branch-note { margin: 2px 0 8px; font-size: 0.68rem; color: var(--text-dim); }
+
+.editora-node {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+}
+
+.editora-node.bought { border-color: var(--gold); background: rgba(233, 196, 106, 0.08); }
+.editora-node-head { display: flex; align-items: center; gap: 6px; }
+.editora-node-head strong { flex: 1; font-size: 0.78rem; }
+.editora-node p { font-size: 0.7rem; line-height: 1.35; color: var(--text-dim); }
+
+.editora-cost {
+  padding: 1px 6px;
+  border: 1px solid currentColor;
+  border-radius: 99px;
+  font-size: 0.62rem;
+  color: var(--gold);
+}
+
+.editora-buy { padding: 5px 8px; font-size: 0.68rem; }
+.editora-owned { font-size: 0.64rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--gold); }
+
+.editora-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin: 12px 0;
+  font-size: 0.76rem;
+}
+
+@media (max-width: 760px) {
+  .editora-grid { grid-template-columns: 1fr; }
+  .editora-summary { grid-template-columns: 1fr 1fr; }
+}

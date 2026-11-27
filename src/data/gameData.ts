@@ -9,6 +9,7 @@ import {
   PrestigeUpgradeData,
   ResourceType,
   SeedData,
+  EditorialUpgradeData,
   StudioUpgradeData,
   SynergyData,
   UpgradeData,
@@ -566,7 +567,7 @@ export const youBuilding: BuildingData = {
   icon: '/icons/players.svg',
   desc: '+60000T jogadores/s, +6000T ouro/s, +20B dados/s, +100B inspiração/s, +20K destino/s',
   flavor: 'A taverna nunca foi o lugar. Era você o tempo todo.',
-  req: (s) => (s.buildings.infiniteTable ?? 0) >= 1 && s.publications >= 1,
+  req: (s) => (s.buildings.infiniteTable ?? 0) >= 1 && s.publicationsEarned >= 1,
   reqHint: 'Construa uma Mesa Infinita e publique uma campanha.',
 };
 
@@ -650,6 +651,94 @@ export const synergyData: SynergyData[] = [
 ];
 
 /** Who shows up for a Mesa ao Vivo (boss encounter). */
+
+/**
+ * Árvore da Editora: paga com pontos de publicação (cada saga publicada rende
+ * PUBLICATIONS_PER_PUBLISH). Comprada uma vez, vale para sempre.
+ */
+export const editorialData: EditorialUpgradeData[] = [
+  {
+    id: 'inkDeal',
+    name: 'Contrato de Tinta',
+    icon: '/icons/scroll.svg',
+    desc: '+25% de produção global em todos os recursos.',
+    cost: 2,
+    branch: 'Economia',
+  },
+  {
+    id: 'goldRights',
+    name: 'Direitos de Ouro',
+    icon: '/icons/crown.svg',
+    desc: '+50% de produção de ouro.',
+    cost: 3,
+    branch: 'Economia',
+  },
+  {
+    id: 'diceRights',
+    name: 'Direitos de Dados',
+    icon: '/icons/dice.svg',
+    desc: '+50% de produção de dados.',
+    cost: 3,
+    branch: 'Economia',
+  },
+  {
+    id: 'tithe',
+    name: 'Dízimo da Guilda',
+    icon: '/icons/players.svg',
+    desc: '+50% de produção de jogadores.',
+    cost: 5,
+    branch: 'Economia',
+  },
+  {
+    id: 'fateRights',
+    name: 'Direitos de Destino',
+    icon: '/icons/fate.svg',
+    desc: '+20% de Destino em toda campanha.',
+    cost: 3,
+    branch: 'Destino',
+  },
+  {
+    id: 'serialized',
+    name: 'Publicação Seriada',
+    icon: '/icons/golden-d20.svg',
+    desc: 'Mesas ao Vivo pagam +1 Destino e duram +15 segundos.',
+    cost: 4,
+    branch: 'Destino',
+  },
+  {
+    id: 'epilogue',
+    name: 'Epílogo',
+    icon: '/icons/hall.svg',
+    desc: '+1 Lenda em cada publicação de saga.',
+    cost: 6,
+    branch: 'Destino',
+  },
+  {
+    id: 'advance',
+    name: 'Adiantamento',
+    icon: '/icons/guild.svg',
+    desc: 'Cada nova campanha começa com 5.000 ouro, 500 dados e 250 inspiração.',
+    cost: 2,
+    branch: 'Início',
+  },
+  {
+    id: 'preSale',
+    name: 'Pré-venda',
+    icon: '/icons/table.svg',
+    desc: 'Cada nova campanha começa com produção x3 por 90 segundos.',
+    cost: 4,
+    branch: 'Início',
+  },
+  {
+    id: 'concierge',
+    name: 'Concierge',
+    icon: '/icons/gear.svg',
+    desc: '+1 página permanente no Grimório de Tramas.',
+    cost: 5,
+    branch: 'Início',
+  },
+];
+
 export const bossData: BossTemplate[] = [
   { id: 'rulesLawyer', name: 'O Regelista', icon: '/icons/scroll.svg', flavor: 'Ele interrompe o combate para citar livro, página e parágrafo.' },
   { id: 'metagamer', name: 'O Metagamer', icon: '/icons/dice.svg', flavor: 'Já sabe o stat block do monstro e a senha da porta secreta.' },
@@ -1516,9 +1605,9 @@ const studioAchievements: AchievementData[] = [
 
 /** Milestones for the second prestige layer, Publicar a Campanha. */
 const publishAchievements: AchievementData[] = [
-  { id: 'publish1', name: 'Primeira Publicação', desc: 'Publique sua primeira saga.', icon: '/icons/crown.svg', category: 'Editora', req: (s) => s.publications >= 1 },
-  { id: 'publish5', name: 'Coleção de Sagas', desc: 'Publique 5 sagas.', icon: '/icons/scroll.svg', category: 'Editora', req: (s) => s.publications >= 5 },
-  { id: 'publish20', name: 'Biblioteca de Sagas', desc: 'Publique 20 sagas.', icon: '/icons/hall.svg', category: 'Editora', req: (s) => s.publications >= 20 },
+  { id: 'publish1', name: 'Primeira Publicação', desc: 'Publique sua primeira saga.', icon: '/icons/crown.svg', category: 'Editora', req: (s) => s.publicationsEarned >= 1 },
+  { id: 'publish5', name: 'Coleção de Sagas', desc: 'Publique 5 sagas.', icon: '/icons/scroll.svg', category: 'Editora', req: (s) => s.publicationsEarned >= 5 },
+  { id: 'publish20', name: 'Biblioteca de Sagas', desc: 'Publique 20 sagas.', icon: '/icons/hall.svg', category: 'Editora', req: (s) => s.publicationsEarned >= 20 },
   { id: 'legends10', name: 'Dez Lendas', desc: 'Acumule 10 Lendas.', icon: '/icons/fate.svg', category: 'Editora', req: (s) => s.legends >= 10 },
   { id: 'legends50', name: 'Cinquenta Lendas', desc: 'Acumule 50 Lendas.', icon: '/icons/trophy.svg', category: 'Editora', req: (s) => s.legends >= 50 },
   { id: 'legends200', name: 'Duzentas Lendas', desc: 'Acumule 200 Lendas.', icon: '/icons/portal.svg', category: 'Editora', req: (s) => s.legends >= 200 },
@@ -1540,6 +1629,12 @@ const bossAchievements: AchievementData[] = [
   { id: 'boss50', name: 'Lenda da Mesa', desc: 'Vença 50 Mesas ao Vivo.', icon: '/icons/crown.svg', category: 'Geral', req: (s) => s.bossesDefeated >= 50 },
 ];
 
+const editorialAchievements: AchievementData[] = [
+  { id: 'editorial1', name: 'Primeiro Contrato', desc: 'Compre o primeiro nó da Árvore da Editora.', icon: '/icons/scroll.svg', category: 'Editora', req: (s) => s.editorialUpgrades.length >= 1 },
+  { id: 'editorial5', name: 'Editora de Verdade', desc: 'Compre 5 nós da Árvore da Editora.', icon: '/icons/gear.svg', category: 'Editora', req: (s) => s.editorialUpgrades.length >= 5 },
+  { id: 'editorialAll', name: 'Império Editorial', desc: 'Complete os 10 nós da Árvore da Editora.', icon: '/icons/crown.svg', category: 'Editora', req: (s) => s.editorialUpgrades.length >= editorialData.length },
+];
+
 export const achievementsData: AchievementData[] = [
   ...categorisedBaseAchievements,
   ...buildingAchievements,
@@ -1547,6 +1642,7 @@ export const achievementsData: AchievementData[] = [
   ...publishAchievements,
   ...synergyAchievements,
   ...bossAchievements,
+  ...editorialAchievements,
 ];
 
 export const goldenEffects: GoldenEffect[] = [

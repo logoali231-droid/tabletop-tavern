@@ -70,8 +70,8 @@ export const helpSections: HelpSection[] = [
     title: 'Conquistas e fama',
     icon: '/icons/trophy.svg',
     items: [
-      { label: '359 conquistas', text: 'Cada conquista dá +2% de produção permanente (ou +4% com a bênção Fama Dobrada). Elas nunca são perdidas em resets.' },
-      { label: 'Categorias', text: 'O navegador separa Geral, Construções, Prestígio, Editora, Grimório, Dados e Estúdio, com busca sem acento, filtro de bloqueadas e barra de progresso.' },
+      { label: '362 conquistas', text: 'Cada conquista dá +2% de produção permanente (ou +4% com a bênção Fama Dobrada). Elas nunca são perdidas em resets.' },
+      { label: 'Categorias', text: 'O navegador separa Geral, Construções, Prestígio, Editora, Sinergias, Grimório, Dados e Estúdio, com busca sem acento, filtro de bloqueadas e barra de progresso.' },
       { label: 'Marcos', text: 'Cada construção tem 6 marcos (até 1.000 unidades) e o Estúdio rende 9 conquistas próprias.' },
       { label: 'Sinergias', text: 'Conjuntos temáticos de construções (Mesa Posta, Arsenal Arcano, Corte Feérica...) dão bônus global permanente enquanto você tiver pelo menos uma de cada.' },
     ],
@@ -135,8 +135,20 @@ export const helpSections: HelpSection[] = [
     items: [
       { label: 'Requisito', text: 'Dez campanhas concluídas na saga atual. A partir daí cada 5 campanhas valem 1 Lenda.' },
       { label: 'Lendas', text: 'São permanentes e nunca são gastas: cada uma dá +5% de produção global e +5% de ganho de Destino.' },
-      { label: 'O que fica', text: 'Conquistas, dados e dado equipado, híbridos, níveis do Estúdio, Lendas, publicações, tempo de jogo e Destino total histórico.' },
+      { label: 'O que fica', text: 'Conquistas, dados e dado equipado, híbridos, níveis do Estúdio, Lendas, sagas publicadas, pontos e nós da Editora, tempo de jogo e Destino total histórico.' },
+      { label: 'Pontos da Editora', text: 'Cada publicação rende 3 pontos para gastar na Árvore da Editora. As conquistas e o prédio "Você" contam sagas publicadas, então gastar pontos nunca regride progresso.' },
       { label: 'O que some', text: 'Campanhas, multiplicador de campanha, bênçãos compradas, saldo de Destino, recursos, construções, melhorias e tramas plantadas.' },
+    ],
+  },
+  {
+    id: 'editora',
+    title: 'Árvore da Editora',
+    icon: '/icons/scroll.svg',
+    items: [
+      { label: 'Como paga', text: 'Cada saga publicada rende 3 pontos da Editora. Publicações e pontos são coisas separadas: o contador de sagas nunca diminui, só o saldo de pontos.' },
+      { label: 'Os três ramos', text: 'Economia (produção global, ouro, dados e jogadores), Destino (+20% Destino, Mesas ao Vivo melhores, +1 Lenda por publicação) e Início (recursos iniciais, produção x3 por 90s e +1 página no Grimório).' },
+      { label: 'Permanência', text: 'Os 10 nós são comprados uma vez e valem para sempre, inclusive depois de publicar outra saga. Não há reset que os remova.' },
+      { label: 'Conquistas', text: 'Comprar 1, 5 e os 10 nós rende três conquistas na aba Editora.' },
     ],
   },
   {

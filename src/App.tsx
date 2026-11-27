@@ -11,6 +11,7 @@ import {
   SAVE_KEY,
   addResource,
   applyBossVictory,
+  tryBuyEditorial,
   affordableUpgrades,
   applyAchievements,
   applyDiceRoll,
@@ -66,6 +67,7 @@ import PublishModal from './components/PublishModal';
 import DiceMinigame from './components/DiceMiniGame';
 import GoldenDice from './components/GoldenDice';
 import BossFight from './components/BossFight';
+import EditoraModal from './components/EditoraModal';
 import NewsTicker from './components/NewsTicker';
 import OfflineModal from './components/OfflineModal';
 import GardenModal from './components/GardenModal';
@@ -485,6 +487,13 @@ export default function App() {
     });
   };
 
+  const buyEditorial = (id: string) => {
+    const next = tryBuyEditorial(stateRef.current, id);
+    if (!next) return;
+    playSound('upgrade', stateRef.current.soundOn);
+    setState(next);
+  };
+
   const buyStudio = (id: string) => {
     const next = tryBuyStudio(stateRef.current, id);
     if (!next) return;
@@ -710,7 +719,16 @@ export default function App() {
       ) : null}
 
       {modal === 'publish' ? (
-        <PublishModal state={state} onPublish={doPublish} onClose={() => setModal(null)} />
+        <PublishModal
+          state={state}
+          onPublish={doPublish}
+          onOpenEditora={() => setModal('editora')}
+          onClose={() => setModal(null)}
+        />
+      ) : null}
+
+      {modal === 'editora' ? (
+        <EditoraModal state={state} onBuy={buyEditorial} onClose={() => setModal('publish')} />
       ) : null}
 
       {modal === 'minigame' ? (

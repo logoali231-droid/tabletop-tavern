@@ -42,7 +42,9 @@ export default function StatsModal({ state, onClose }: Props) {
           <Row label="Rolagens de D20" value={formatNumber(state.diceRolls)} />
           <Row label="Tramas colhidas" value={formatNumber(state.plotsHarvested)} />
           <Row label="Bênçãos compradas" value={formatNumber(state.prestigeUpgradesBought.length)} />
-          <Row label="Sagas publicadas" value={formatNumber(state.publications)} />
+          <Row label="Sagas publicadas" value={formatNumber(state.publicationsEarned)} />
+          <Row label="Pontos da Editora" value={formatNumber(state.publications)} />
+          <Row label="Nós da Editora" value={formatNumber(state.editorialUpgrades.length)} />
           <Row label="Lendas" value={formatNumber(state.legends)} />
         </section>
 

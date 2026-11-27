@@ -3,6 +3,7 @@ import {
   buildingsData,
   bossData,
   diceSetData,
+  editorialData,
   gardenHybridsData,
   gardenSeedsData,
   hybridRecipes,
@@ -47,6 +48,8 @@ export const CAMPAIGNS_PER_LEGEND = 5;
 /** Cada Lenda vale +5% de produção e +5% de Destino, para sempre. */
 export const LEGEND_PROD_BONUS = 0.05;
 export const LEGEND_FATE_BONUS = 0.05;
+/** Pontos da Editora que cada publicação de saga rende. */
+export const PUBLICATIONS_PER_PUBLISH = 3;
 /**
  * Destino vindo de construções nunca passa de uma campanha a cada 30s, para o
  * reset continuar sendo a fonte principal no fim do jogo.
@@ -107,7 +110,7 @@ export function createInitialState(): GameState {
     upgradesBought: [],
     campaigns: 0, campaignMultiplier: 1, prestigeUpgradesBought: [],
     bossesDefeated: 0,
-    legends: 0, publications: 0,
+    legends: 0, publications: 0, publicationsEarned: 0, editorialUpgrades: [],
     achievements: [],
     goldenDiceCollected: 0,
     diceRolls: 0,
@@ -196,7 +199,8 @@ export function getProdMultiplier(state: GameState): number {
     * getBoostProd(state)
     * getStudioProd(state)
     * getLegendProdBonus(state)
-    * getSynergyBonus(state);
+    * getSynergyBonus(state)
+    * getEditoraProdBonus(state);
 }
 
 export function getClickMultiplier(state: GameState): number {
@@ -241,6 +245,9 @@ export function getProduction(state: GameState): Production {
       total[resource as ResourceType] += amount ?? 0;
     }
   }
+  total.players *= getEditoraPlayersBonus(state);
+  total.gold *= getEditoraGoldBonus(state);
+  total.dice *= getEditoraDiceBonus(state);
   total.inspiration *= getStudioInspiration(state);
   // Destino passivo é limitado para o reset continuar valendo a pena.
   total.fate = Math.min(total.fate, getFateYieldCap(state));
@@ -326,7 +333,9 @@ export function getLegendFateBonus(state: GameState): number {
 
 /** Bênção do Amplificador + Lendas, aplicadas à raiz do Destino. */
 function getFateGainMultiplier(state: GameState): number {
-  return (hasBlessing(state, 'fateAmplifier') ? 1.25 : 1) * getLegendFateBonus(state);
+  return (hasBlessing(state, 'fateAmplifier') ? 1.25 : 1)
+    * getLegendFateBonus(state)
+    * getEditoraFateBonus(state);
 }
 
 export function getFateGain(state: GameState): number {
@@ -412,6 +421,8 @@ export function prestigeReset(state: GameState): GameState {
     bossesDefeated: state.bossesDefeated,
     legends: state.legends,
     publications: state.publications,
+    publicationsEarned: state.publicationsEarned,
+    editorialUpgrades: [...state.editorialUpgrades],
     achievements: [...state.achievements],
     diceSet: [...state.diceSet],
     equippedDie: state.equippedDie,
@@ -427,7 +438,7 @@ export function prestigeReset(state: GameState): GameState {
   for (const id of next.prestigeUpgradesBought) {
     prestigeUpgradesData.find((upgrade) => upgrade.id === id)?.apply(next);
   }
-  return next;
+  return applyCampaignStart(next);
 }
 
 /* ------------------------------------------------------------------ */
@@ -437,7 +448,8 @@ export function prestigeReset(state: GameState): GameState {
 /** Lendas que a saga atual rende ao ser publicada. */
 export function getLegendGain(state: GameState): number {
   if (state.campaigns < PUBLISH_MIN_CAMPAIGNS) return 0;
-  return Math.floor(state.campaigns / CAMPAIGNS_PER_LEGEND);
+  const legends = Math.floor(state.campaigns / CAMPAIGNS_PER_LEGEND);
+  return legends + (hasEditorialUpgrade(state, 'epilogue') ? 1 : 0);
 }
 
 /** Campanhas que faltam para desbloquear a publicação. */
@@ -462,7 +474,9 @@ export function publishReset(state: GameState): GameState {
   const next: GameState = {
     ...createInitialState(),
     legends: state.legends + gained,
-    publications: state.publications + 1,
+    publications: state.publications + PUBLICATIONS_PER_PUBLISH,
+    publicationsEarned: state.publicationsEarned + 1,
+    editorialUpgrades: [...state.editorialUpgrades],
     bossesDefeated: state.bossesDefeated,
     achievements: [...state.achievements],
     diceSet: [...state.diceSet],
@@ -478,7 +492,7 @@ export function publishReset(state: GameState): GameState {
     soundOn: state.soundOn,
     lastSeen: Date.now(),
   };
-  return applyAchievements(next);
+  return applyCampaignStart(applyAchievements(next));
 }
 
 /* ------------------------------------------------------------------ */
@@ -746,6 +760,7 @@ export function getGardenSlots(state: GameState): number {
   let slots = 4 + Math.min(4, Math.floor(state.campaigns / 2));
   if (hasBlessing(state, 'verdantMuse')) slots += 1;
   if (hasBlessing(state, 'manyPages')) slots += 2;
+  if (hasEditorialUpgrade(state, 'concierge')) slots += 1;
   return Math.min(GARDEN_MAX_SLOTS, slots);
 }
 
@@ -921,6 +936,24 @@ export function saveGame(state: GameState): void {
   }
 }
 
+
+function publicationsEarned(parsed: Record<string, unknown>): number {
+  const legacy = Math.max(0, Math.floor(finite(parsed.publications)));
+  const earned = parsed.publicationsEarned;
+  return typeof earned === 'number' && Number.isFinite(earned)
+    ? Math.max(0, Math.floor(earned))
+    : legacy;
+}
+
+function editorialPoints(parsed: Record<string, unknown>): number {
+  const stored = Math.max(0, Math.floor(finite(parsed.publications)));
+  const earned = parsed.publicationsEarned;
+  // Old saves stored the number of sagas in `publications`: redeem them as points.
+  return typeof earned === 'number' && Number.isFinite(earned)
+    ? stored
+    : stored * PUBLICATIONS_PER_PUBLISH;
+}
+
 function finite(value: unknown, fallback = 0): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 }
@@ -998,7 +1031,10 @@ export function normalizeSave(raw: unknown): GameState | null {
     prestigeUpgradesBought: stringArray(parsed.prestigeUpgradesBought),
     bossesDefeated: Math.max(0, Math.floor(finite(parsed.bossesDefeated))),
     legends: Math.max(0, Math.floor(finite(parsed.legends))),
-    publications: Math.max(0, Math.floor(finite(parsed.publications))),
+    publications: editorialPoints(parsed),
+    publicationsEarned: publicationsEarned(parsed),
+    editorialUpgrades: stringArray(parsed.editorialUpgrades)
+      .filter((id) => editorialData.some((node) => node.id === id)),
     achievements: stringArray(parsed.achievements),
     goldenDiceCollected: finite(parsed.goldenDiceCollected),
     diceRolls: finite(parsed.diceRolls),
@@ -1113,7 +1149,7 @@ export function createBoss(state: GameState, random: () => number = Math.random)
     key: `${template.id}-${Date.now()}`,
     hp: maxHp,
     maxHp,
-    timeLeft: BOSS_DURATION,
+    timeLeft: BOSS_DURATION + (hasEditorialUpgrade(state, 'serialized') ? 15 : 0),
     combo: 0,
   };
 }
@@ -1130,7 +1166,7 @@ export function applyBossVictory(state: GameState): { state: GameState; gains: P
     gold: Math.max(production.gold * 180, 0),
     dice: Math.max(60, production.dice * 180),
     inspiration: Math.max(25, production.inspiration * 180),
-    fate: 2,
+    fate: getEditoraBossFate(state),
   };
 
   const next: GameState = { ...state, bossesDefeated: state.bossesDefeated + 1 };
@@ -1145,4 +1181,72 @@ export function applyBossVictory(state: GameState): { state: GameState; gains: P
     timeLeft: 30,
   });
   return { state: applyAchievements(boosted), gains };
+}
+
+/* ------------------------------------------------------------------ */
+/* Árvore da Editora                                                   */
+/* ------------------------------------------------------------------ */
+
+export function hasEditorialUpgrade(state: GameState, id: string): boolean {
+  return state.editorialUpgrades.includes(id);
+}
+
+export function getEditoraProdBonus(state: GameState): number {
+  return hasEditorialUpgrade(state, 'inkDeal') ? 1.25 : 1;
+}
+
+export function getEditoraGoldBonus(state: GameState): number {
+  return hasEditorialUpgrade(state, 'goldRights') ? 1.5 : 1;
+}
+
+export function getEditoraDiceBonus(state: GameState): number {
+  return hasEditorialUpgrade(state, 'diceRights') ? 1.5 : 1;
+}
+
+export function getEditoraPlayersBonus(state: GameState): number {
+  return hasEditorialUpgrade(state, 'tithe') ? 1.5 : 1;
+}
+
+export function getEditoraFateBonus(state: GameState): number {
+  return hasEditorialUpgrade(state, 'fateRights') ? 1.2 : 1;
+}
+
+export function getEditoraBossFate(state: GameState): number {
+  return hasEditorialUpgrade(state, 'serialized') ? 3 : 2;
+}
+
+/** Start-of-campaign bonuses from the Início branch. */
+export function applyCampaignStart(state: GameState): GameState {
+  let next = state;
+  if (hasEditorialUpgrade(next, 'advance')) {
+    next = {
+      ...next,
+      gold: next.gold + 5000,
+      dice: next.dice + 500,
+      inspiration: next.inspiration + 250,
+    };
+  }
+  if (hasEditorialUpgrade(next, 'preSale')) {
+    next = applyBoost(next, {
+      id: 'editoraPreSale',
+      name: 'Pré-venda',
+      desc: 'Produção x3',
+      prodMult: 3,
+      clickMult: 1,
+      timeLeft: 90,
+    });
+  }
+  return next;
+}
+
+/** Buys one Editora node with publication points. */
+export function tryBuyEditorial(state: GameState, id: string): GameState | null {
+  const node = editorialData.find((entry) => entry.id === id);
+  if (!node || hasEditorialUpgrade(state, id)) return null;
+  if (state.publications < node.cost) return null;
+  return applyAchievements({
+    ...state,
+    publications: state.publications - node.cost,
+    editorialUpgrades: [...state.editorialUpgrades, id],
+  });
 }
