@@ -1,6 +1,6 @@
 import { GameState } from '../types';
 import { prestigeUpgradesData } from '../data/gameData';
-import { getFateGain } from '../utils/game';
+import { getFateGain, getNextFatePlayers } from '../utils/game';
 import { formatNumber } from '../utils/format';
 import Modal from './Modal';
 
@@ -19,6 +19,7 @@ interface Group {
 export default function PrestigeTree({ state, onBuyPrestige, onPrestige, onClose }: Props) {
   const gain = getFateGain(state);
   const canPrestige = gain >= 1;
+  const missingForNext = Math.max(0, getNextFatePlayers(state) - state.playersEarned);
   const bought = state.prestigeUpgradesBought.length;
 
   const groups: Group[] = [];
@@ -65,7 +66,7 @@ export default function PrestigeTree({ state, onBuyPrestige, onPrestige, onClose
           <span className="prestige-note">
             {canPrestige
               ? 'Você perde jogadores, ouro, construções e melhorias. Conquistas, bênçãos, tramas e Destino ficam.'
-              : 'Ganhe 10K de jogadores no total para conseguir o primeiro Destino.'}
+              : `Faltam ${formatNumber(missingForNext)} jogadores nesta campanha para o próximo Destino.`}
           </span>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import {
+  AchievementCategory,
   AchievementData,
   BuildingData,
   DieData,
@@ -1236,12 +1237,63 @@ const buildingAchievements: AchievementData[] = buildingsData.flatMap((building,
       name,
       desc: `Construa ${count}× ${building.name}.`,
       icon: building.icon,
+      category: 'Construções',
       req: (state: GameState) => (state.buildings[building.id] ?? 0) >= count,
     };
   });
 });
 
-export const achievementsData: AchievementData[] = [...baseAchievements, ...buildingAchievements];
+/** Categories used by the achievement browser; anything untagged shows under Geral. */
+const achievementCategories: Record<string, AchievementCategory> = {};
+for (const id of [
+  'fate10', 'fate100', 'fate1000',
+  'campaign1', 'campaign3', 'campaign10', 'campaign25', 'campaign50',
+  'blessing1', 'blessing10', 'blessing25', 'blessing40',
+]) {
+  achievementCategories[id] = 'Prestígio';
+}
+for (const id of [
+  'dice100', 'dice1000', 'dice100k', 'dice100m',
+  'roll10', 'roll100', 'roll500', 'roll1000',
+  'golden1', 'golden10', 'golden100', 'golden500',
+]) {
+  achievementCategories[id] = 'Dados';
+}
+for (const id of ['plot1', 'plot25', 'plot100', 'plot500', 'plot1000']) {
+  achievementCategories[id] = 'Grimório';
+}
+
+const categorisedBaseAchievements: AchievementData[] = baseAchievements.map((achievement) => ({
+  ...achievement,
+  category: achievementCategories[achievement.id] ?? 'Geral',
+}));
+
+const studioLevelGoal = (id: string, level: number) => (
+  (state: GameState) => (state.studioLevels[id] ?? 0) >= level
+);
+
+const studioTotalLevels = (state: GameState) => (
+  Object.values(state.studioLevels).reduce((sum, level) => sum + level, 0)
+);
+
+/** Five manuscript milestones plus four totals for the Estúdio de Ideias. */
+const studioAchievements: AchievementData[] = [
+  { id: 'studioRascunho10', name: 'Rascunho Publicado', desc: 'Nível 10 em Rascunho Eterno.', icon: '/icons/scroll.svg', category: 'Estúdio', req: studioLevelGoal('rascunho', 10) },
+  { id: 'studioPunho10', name: 'Punho de Mestre', desc: 'Nível 10 em Punho Criativo.', icon: '/icons/brush.svg', category: 'Estúdio', req: studioLevelGoal('punho', 10) },
+  { id: 'studioFluxo10', name: 'Fluxo Inesgotável', desc: 'Nível 10 em Fluxo de Ideias.', icon: '/icons/inspiration.svg', category: 'Estúdio', req: studioLevelGoal('fluxo', 10) },
+  { id: 'studioSorte10', name: 'Sorte de Autor', desc: 'Nível 10 em Sorte Escrita.', icon: '/icons/golden-d20.svg', category: 'Estúdio', req: studioLevelGoal('sorte', 10) },
+  { id: 'studioRoteiro10', name: 'Roteiro Premiado', desc: 'Nível 10 em Roteiro Afiado.', icon: '/icons/lute.svg', category: 'Estúdio', req: studioLevelGoal('roteiro', 10) },
+  { id: 'studioTotal5', name: 'Primeiro Caderno', desc: 'Some 5 níveis no Estúdio de Ideias.', icon: '/icons/scroll.svg', category: 'Estúdio', req: (s) => studioTotalLevels(s) >= 5 },
+  { id: 'studioTotal25', name: 'Oficina de Ideias', desc: 'Some 25 níveis no Estúdio de Ideias.', icon: '/icons/brush.svg', category: 'Estúdio', req: (s) => studioTotalLevels(s) >= 25 },
+  { id: 'studioTotal100', name: 'Editora Lendária', desc: 'Some 100 níveis no Estúdio de Ideias.', icon: '/icons/crown.svg', category: 'Estúdio', req: (s) => studioTotalLevels(s) >= 100 },
+  { id: 'studioTotal250', name: 'Fábrica de Mundos', desc: 'Some 250 níveis no Estúdio de Ideias.', icon: '/icons/portal.svg', category: 'Estúdio', req: (s) => studioTotalLevels(s) >= 250 },
+];
+
+export const achievementsData: AchievementData[] = [
+  ...categorisedBaseAchievements,
+  ...buildingAchievements,
+  ...studioAchievements,
+];
 
 export const goldenEffects: GoldenEffect[] = [
   {

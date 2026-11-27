@@ -137,11 +137,21 @@ export interface StudioUpgradeData {
   growth: number;
 }
 
+export type AchievementCategory =
+  | 'Geral'
+  | 'Construções'
+  | 'Prestígio'
+  | 'Grimório'
+  | 'Dados'
+  | 'Estúdio';
+
 export interface AchievementData {
   id: string;
   name: string;
   desc: string;
   icon: string;
+  /** Group used by the achievement browser; untagged entries fall under Geral. */
+  category?: AchievementCategory;
   req: (state: GameState) => boolean;
 }
 

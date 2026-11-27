@@ -276,9 +276,24 @@ export function sellRefund(baseCost: number, owned: number, amount: number): num
   return Math.floor(bulkCost(baseCost, owned - units, units) * SELL_REFUND);
 }
 
+/** Jogadores que uma campanha precisa somar por ponto de Destino. */
+export const FATE_PLAYERS_PER_POINT = 100000;
+
+/**
+ * Destino por campanha cresce com raiz cúbica: cada década de jogadores vale só
+ * ~2x de Destino, então bênçãos continuam sendo uma decisão a longo prazo.
+ */
 export function getFateGain(state: GameState): number {
-  const base = Math.floor(Math.sqrt(state.playersEarned / 10000));
+  // O epsilon evita que um cubo exato (ex.: 1000) caia para 9.999… e perca um ponto.
+  const base = Math.floor(Math.cbrt(state.playersEarned / FATE_PLAYERS_PER_POINT) + 1e-9);
   return hasBlessing(state, 'fateAmplifier') ? Math.floor(base * 1.25) : base;
+}
+
+/** Total de jogadores que a campanha atual precisa para o próximo ponto de Destino. */
+export function getNextFatePlayers(state: GameState): number {
+  const target = getFateGain(state) + 1;
+  const base = hasBlessing(state, 'fateAmplifier') ? target / 1.25 : target;
+  return Math.ceil(FATE_PLAYERS_PER_POINT * base ** 3);
 }
 
 export function unlockDice(state: GameState): GameState {
@@ -308,11 +323,11 @@ export function tryBuyStudio(state: GameState, id: string): GameState | null {
   const cost = studioCost(upgrade, level);
   if (state.inspiration < cost) return null;
 
-  return {
+  return applyAchievements({
     ...state,
     inspiration: state.inspiration - cost,
     studioLevels: { ...state.studioLevels, [id]: level + 1 },
-  };
+  });
 }
 
 /** Equips a die that has already been collected. */

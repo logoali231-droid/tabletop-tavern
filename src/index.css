@@ -681,6 +681,86 @@ h1, h2, h3, h4 { font-family: 'Cinzel', serif; letter-spacing: 0.3px; }
 .ach-state { color: var(--success); font-weight: 700; }
 .ach-card:not(.unlocked) .ach-state { color: var(--border-color); }
 
+.ach-progress { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; }
+
+.ach-progress-track {
+  flex: 1;
+  height: 8px;
+  border-radius: 99px;
+  background: #241810;
+  border: 1px solid var(--border-soft);
+  overflow: hidden;
+}
+
+.ach-progress-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--success), var(--gold));
+  transition: width 0.3s ease;
+}
+
+.ach-progress-label { font-size: 0.76rem; color: var(--text-dim); white-space: nowrap; }
+
+.ach-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+
+.ach-search {
+  flex: 1;
+  min-width: 180px;
+  background: #1a110a;
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 0.82rem;
+}
+
+.ach-search:focus { outline: none; border-color: var(--gold); }
+
+.ach-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  cursor: pointer;
+  user-select: none;
+}
+
+.ach-toggle input { accent-color: var(--gold); }
+
+.ach-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+
+.ach-tab {
+  background: #1a110a;
+  border: 1px solid var(--border-soft);
+  border-radius: 99px;
+  padding: 5px 12px;
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ach-tab:hover { border-color: var(--gold); color: var(--text-main); }
+.ach-tab.active { border-color: var(--gold); color: var(--gold); background: rgba(233, 196, 106, 0.12); }
+.ach-tab-count { margin-left: 5px; font-weight: 600; opacity: 0.72; }
+
+.ach-tag {
+  flex: none;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  border: 1px solid var(--border-soft);
+  border-radius: 99px;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+
+.ach-empty { padding: 22px; text-align: center; color: var(--text-dim); font-size: 0.84rem; }
+
 /* ---------- stats ---------- */
 .stat-columns {
   display: grid;
