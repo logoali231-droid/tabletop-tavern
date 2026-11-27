@@ -1,31 +1,58 @@
+import { MouseEvent } from 'react';
 import { GameState } from '../types';
-import { formatNumber } from './ResourceBar';
+import { getClickValue, getProduction } from '../utils/game';
+import { formatNumber, formatRate } from '../utils/format';
 
 interface Props {
   state: GameState;
-  onClick: (e: React.MouseEvent) => void;
+  onClick: (event: MouseEvent<HTMLButtonElement>) => void;
 }
 
 export default function ClickerArea({ state, onClick }: Props) {
-  return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
-      
-      {state.activeBoost && (
-        <div style={{ position: 'absolute', top: '10px', background: 'var(--success)', color: 'white', padding: '10px 20px', borderRadius: '20px', fontWeight: 'bold', animation: 'pulse 1s infinite' }}>
-          {state.activeBoost.name} {state.activeBoost.multiplier}x ({Math.ceil(state.activeBoost.timeLeft)}s)
-        </div>
-      )}
+  const production = getProduction(state);
+  const clickValue = getClickValue(state);
 
-      <button onClick={onClick} style={{
-        width: '280px', height: '280px', borderRadius: '50%', background: 'var(--btn-bg)', border: '4px solid var(--border-color)',
-        boxShadow: '0 0 40px rgba(244, 162, 97, 0.2), inset 0 0 20px rgba(0,0,0,0.8)', color: 'var(--text-main)',
-        fontFamily: 'Cinzel, serif', fontSize: '1.2rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '10px'
-      }}>
-        <img src="/icons/table.svg" className="game-icon-large" alt="Mesa" />
-        <span>Hospedar Sessão</span>
+  return (
+    <section className="panel clicker">
+      <h1 className="clicker-title">Tabletop Tavern</h1>
+      <div className="clicker-boosts">
+        {state.activeBoosts.length > 0 ? (
+          state.activeBoosts.map((boost) => (
+            <div className="boost-badge" key={boost.id}>
+              <span className="boost-name">{boost.name}</span>
+              <span className="boost-mult">
+                {boost.prodMult > 1 ? `x${boost.prodMult} produção` : null}
+                {boost.prodMult > 1 && boost.clickMult > 1 ? ' · ' : null}
+                {boost.clickMult > 1 ? `x${boost.clickMult} clique` : null}
+              </span>
+              <span className="boost-time">{Math.ceil(boost.timeLeft)}s</span>
+            </div>
+          ))
+        ) : (
+          <div className="boost-badge boost-idle">Nenhum bônus ativo</div>
+        )}
+      </div>
+
+      <button type="button" className="tavern-button" onClick={onClick}>
+        <img src="/icons/table.svg" alt="" className="tavern-button-icon" />
+        <span className="tavern-button-label">Hospedar Sessão</span>
+        <span className="tavern-button-sub">+{formatNumber(clickValue)} jogadores</span>
       </button>
 
-      <div style={{ marginTop: '20px', fontSize: '1.1rem', color: '#aaa' }}>Sessões jogadas: {formatNumber(state.clicks)}</div>
-    </div>
+      <div className="clicker-meta">
+        <div className="meta-item">
+          <span className="meta-label">Sessões jogadas</span>
+          <span className="meta-value">{formatNumber(state.clicks)}</span>
+        </div>
+        <div className="meta-item">
+          <span className="meta-label">Jogadores por segundo</span>
+          <span className="meta-value">+{formatRate(production.players)}</span>
+        </div>
+        <div className="meta-item">
+          <span className="meta-label">Fama das conquistas</span>
+          <span className="meta-value">+{(state.achievements.length * 2)}%</span>
+        </div>
+      </div>
+    </section>
   );
 }

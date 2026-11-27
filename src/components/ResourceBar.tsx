@@ -1,55 +1,86 @@
-import { GameState } from '../types';
-
-export function formatNumber(num: number): string {
-  if (num >= 1e12) return (num / 1e12).toFixed(2) + 'T';
-  if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
-  if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
-  if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
-  return Math.floor(num).toString();
-}
+import { GameState, ModalId, ResourceType } from '../types';
+import { getGardenSlots, getPlotStatus, getProduction, RESOURCES } from '../utils/game';
+import { formatNumber, formatRate } from '../utils/format';
 
 interface Props {
   state: GameState;
-  onOpenPrestige: () => void;
-  onOpenMinigame: () => void;
+  onOpen: (modal: ModalId) => void;
+  savedAt: number;
 }
 
-export default function ResourceBar({ state, onOpenPrestige, onOpenMinigame }: Props) {
+const ALWAYS_VISIBLE: ResourceType[] = ['players', 'gold'];
+
+export default function ResourceBar({ state, onOpen, savedAt }: Props) {
+  const production = getProduction(state);
+  const slots = getGardenSlots(state);
+  const ready = Array.from({ length: slots }, (_, index) => getPlotStatus(state, index))
+    .filter((status) => status?.mature).length;
+
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--panel-bg)', padding: '15px', border: '2px solid var(--border-color)', borderRadius: '10px', boxShadow: '0 4px 10px rgba(0,0,0,0.5)' }}>
-      
-      <div style={{ display: 'flex', gap: '25px', flexWrap: 'wrap' }}>
-        <div style={{ fontSize: '1.2rem', fontWeight: 600, display: 'flex', alignItems: 'center' }}>
-          <img src="/icons/players.svg" className="game-icon" alt="Players" /> 
-          <span style={{ color: 'var(--text-highlight)' }}>{formatNumber(state.players)}</span>
-        </div>
-        <div style={{ fontSize: '1.2rem', fontWeight: 600, display: 'flex', alignItems: 'center' }}>
-          <img src="/icons/gold.svg" className="game-icon" alt="Gold" /> 
-          <span style={{ color: 'var(--gold)' }}>{formatNumber(state.gold)}</span>
-        </div>
-        {state.diceEarned > 0 && <div style={{ fontSize: '1.2rem', fontWeight: 600, display: 'flex', alignItems: 'center' }}>
-          <img src="/icons/dice.svg" className="game-icon" alt="Dice" /> 
-          <span style={{ color: '#fff' }}>{formatNumber(state.dice)}</span>
-        </div>}
-        {state.inspirationEarned > 0 && <div style={{ fontSize: '1.2rem', fontWeight: 600, display: 'flex', alignItems: 'center' }}>
-          <img src="/icons/inspiration.svg" className="game-icon" alt="Inspiration" /> 
-          <span style={{ color: '#9b5de5' }}>{formatNumber(state.inspiration)}</span>
-        </div>}
-        {state.campaigns > 0 && <div style={{ fontSize: '1.2rem', fontWeight: 600, display: 'flex', alignItems: 'center' }}>
-          <img src="/icons/fate.svg" className="game-icon" alt="Fate" /> 
-          <span style={{ color: 'var(--danger)' }}>{formatNumber(state.fate)}</span>
-        </div>}
+    <header className="topbar">
+      <div className="resource-list">
+        {RESOURCES.map((resource) => {
+          const value = state[resource.id];
+          const earned = state[`${resource.id}Earned` as keyof GameState] as number;
+          const visible = ALWAYS_VISIBLE.includes(resource.id) || earned > 0 || value > 0;
+          if (!visible) return null;
+          return (
+            <div className="resource" key={resource.id} title={`${resource.label}: ${formatNumber(value)}`}>
+              <img src={resource.icon} alt="" className="game-icon" />
+              <div className="resource-text">
+                <span className={`resource-value resource-${resource.id}`}>{formatNumber(value)}</span>
+                <span className="resource-rate">
+                  +{formatRate(production[resource.id])}/s
+                </span>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      <div style={{ display: 'flex', gap: '10px' }}>
-        <button onClick={onOpenMinigame} style={{ background: 'var(--btn-bg)', color: 'white', border: '1px solid var(--border-color)', padding: '8px 15px', borderRadius: '5px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-          <img src="/icons/dice.svg" className="game-icon" style={{marginRight: '5px'}} /> Jogar Dados
+      <div className="topbar-actions">
+        <span className="autosave" key={savedAt} title="O progresso é salvo automaticamente">
+          salvo
+        </span>
+        <button type="button" className="btn btn-ghost" onClick={() => onOpen('garden')}>
+          <img src="/icons/scroll.svg" alt="" className="game-icon" /> Grimório
+          {ready > 0 ? <span className="btn-badge">{ready}</span> : null}
         </button>
-        <button onClick={onOpenPrestige} style={{ background: 'var(--danger)', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
-          <img src="/icons/fate.svg" className="game-icon" style={{marginRight: '5px', filter: 'invert(1)'}} /> Prestígio
+        <button type="button" className="btn btn-ghost" onClick={() => onOpen('minigame')}>
+          <img src="/icons/dice.svg" alt="" className="game-icon" /> Dados
+        </button>
+        <button type="button" className="btn btn-danger" onClick={() => onOpen('prestige')}>
+          <img src="/icons/fate.svg" alt="" className="game-icon" /> Prestígio
+        </button>
+        <button
+          type="button"
+          className="icon-btn"
+          onClick={() => onOpen('achievements')}
+          title={`Conquistas (${state.achievements.length})`}
+          aria-label="Conquistas"
+        >
+          <img src="/icons/trophy.svg" alt="" className="game-icon" />
+          <span className="icon-btn-badge">{state.achievements.length}</span>
+        </button>
+        <button
+          type="button"
+          className="icon-btn"
+          onClick={() => onOpen('stats')}
+          title="Estatísticas"
+          aria-label="Estatísticas"
+        >
+          <img src="/icons/stats.svg" alt="" className="game-icon" />
+        </button>
+        <button
+          type="button"
+          className="icon-btn"
+          onClick={() => onOpen('settings')}
+          title="Opções"
+          aria-label="Opções"
+        >
+          <img src="/icons/gear.svg" alt="" className="game-icon" />
         </button>
       </div>
-
-    </div>
+    </header>
   );
 }

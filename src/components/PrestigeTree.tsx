@@ -1,6 +1,8 @@
 import { GameState } from '../types';
 import { prestigeUpgradesData } from '../data/gameData';
-import { formatNumber } from './ResourceBar';
+import { getFateGain } from '../utils/game';
+import { formatNumber } from '../utils/format';
+import Modal from './Modal';
 
 interface Props {
   state: GameState;
@@ -9,67 +11,107 @@ interface Props {
   onClose: () => void;
 }
 
+interface Group {
+  name: string;
+  blessings: typeof prestigeUpgradesData;
+}
+
 export default function PrestigeTree({ state, onBuyPrestige, onPrestige, onClose }: Props) {
+  const gain = getFateGain(state);
+  const canPrestige = gain >= 1;
+  const bought = state.prestigeUpgradesBought.length;
+
+  const groups: Group[] = [];
+  for (const blessing of prestigeUpgradesData) {
+    let group = groups.find((entry) => entry.name === blessing.group);
+    if (!group) {
+      group = { name: blessing.group, blessings: [] };
+      groups.push(group);
+    }
+    group.blessings.push(blessing);
+  }
+
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.9)', zIndex: 9999, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-      <div style={{ background: 'var(--panel-bg)', padding: '30px', borderRadius: '15px', border: '4px solid var(--danger)', width: '850px', maxWidth: '95%', maxHeight: '90vh', overflowY: 'auto' }}>
-        
-        {/* Cabeçalho */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid var(--border-color)', paddingBottom: '15px', marginBottom: '20px' }}>
-          <h1 style={{ color: 'var(--danger)', fontFamily: 'Cinzel, serif', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <img src="/icons/fate.svg" alt="Fate" style={{ width: '40px', height: '40px', filter: 'invert(1)' }} />
-            Árvore de Prestígio
-          </h1>
-          <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: '1.5rem', cursor: 'pointer', fontWeight: 'bold' }}>✖</button>
+    <Modal title="Árvore de Prestígio" icon="/icons/fate.svg" size="wide" onClose={onClose}>
+      <div className="prestige-summary">
+        <div className="prestige-block">
+          <span className="prestige-label">Campanhas concluídas</span>
+          <strong className="prestige-big">{state.campaigns}</strong>
+          <span className="prestige-note">
+            Multiplicador permanente: x{state.campaignMultiplier.toFixed(1)}
+          </span>
         </div>
-
-        {/* Status Atual e Botão de Reset */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', background: '#1a110a', padding: '20px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
-          <div>
-            <h3 style={{ fontSize: '1.4rem', marginBottom: '5px' }}>Campanhas Concluídas: <span style={{ color: 'var(--text-highlight)' }}>{state.campaigns}</span></h3>
-            <p style={{ color: '#aaa' }}>Multiplicador Global Permanente: <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>{state.campaignMultiplier.toFixed(1)}x</span></p>
-          </div>
-          <div style={{ textAlign: 'right' }}>
-            <h3 style={{ color: 'var(--danger)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', marginBottom: '10px' }}>
-              <img src="/icons/fate.svg" alt="Fate" style={{ width: '24px', height: '24px', filter: 'invert(1)' }} />
-              {formatNumber(state.fate)} Destino
-            </h3>
-            <button onClick={onPrestige} disabled={state.playersEarned < 10000} style={{ background: 'var(--danger)', color: 'white', padding: '12px 20px', borderRadius: '5px', border: 'none', fontWeight: 'bold', fontSize: '1.1rem', cursor: state.playersEarned >= 10000 ? 'pointer' : 'not-allowed', opacity: state.playersEarned >= 10000 ? 1 : 0.5, boxShadow: state.playersEarned >= 10000 ? '0 0 15px var(--danger)' : 'none' }}>
-              Resetar Campanha
-            </button>
-            {state.playersEarned < 10000 && <p style={{ fontSize: '0.8rem', color: 'var(--danger)', marginTop: '5px' }}>Requer 10K de Jogadores ganhos na vida.</p>}
-          </div>
+        <div className="prestige-block">
+          <span className="prestige-label">Destino disponível</span>
+          <strong className="prestige-big fate">{formatNumber(state.fate)}</strong>
+          <span className="prestige-note">Ganhe Destino ao reiniciar a campanha.</span>
         </div>
-
-        {/* Lista de Bênçãos */}
-        <h2 style={{ color: 'var(--text-highlight)', marginBottom: '15px' }}>Bênçãos Divinas (Melhorias Permanentes)</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-          {prestigeUpgradesData.map(pu => {
-            const isBought = state.prestigeUpgradesBought.includes(pu.id);
-            const canBuy = state.fate >= pu.cost && !isBought && pu.req(state);
-            
-            return (
-              <div key={pu.id} style={{ background: isBought ? 'rgba(42, 157, 143, 0.2)' : 'var(--btn-bg)', border: isBought ? '2px solid var(--success)' : '2px solid var(--border-color)', padding: '15px', borderRadius: '8px', opacity: canBuy || isBought ? 1 : 0.6 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                  <img src={pu.icon} alt={pu.name} style={{ width: '40px', height: '40px', filter: isBought ? 'invert(1) sepia(1) saturate(5) hue-rotate(90deg)' : 'invert(0.8) sepia(0.5) saturate(2) hue-rotate(-10deg)' }} />
-                  <h3 style={{ color: isBought ? 'var(--success)' : 'var(--text-highlight)' }}>{pu.name}</h3>
-                </div>
-                <p style={{ fontSize: '0.9rem', margin: '5px 0', minHeight: '40px' }}>{pu.desc}</p>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '15px' }}>
-                  <span style={{ color: 'var(--danger)', fontWeight: 'bold' }}>Custo: {pu.cost} Destino</span>
-                  {isBought ? (
-                    <span style={{ color: 'var(--success)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}>✅ Comprado</span> 
-                  ) : (
-                    <button disabled={!canBuy} onClick={() => onBuyPrestige(pu.id, pu.cost)} style={{ background: 'var(--text-highlight)', color: 'black', padding: '8px 15px', borderRadius: '5px', border: 'none', fontWeight: 'bold', cursor: canBuy ? 'pointer' : 'not-allowed' }}>
-                      Comprar
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+        <div className="prestige-block">
+          <span className="prestige-label">Bênçãos compradas</span>
+          <strong className="prestige-big">{bought}/{prestigeUpgradesData.length}</strong>
+          <span className="prestige-note">Cada bênção muda uma regra do jogo.</span>
+        </div>
+        <div className="prestige-block prestige-reset">
+          <span className="prestige-label">Próxima campanha rende</span>
+          <strong className="prestige-big fate">+{formatNumber(gain)} Destino</strong>
+          <button
+            type="button"
+            className="btn btn-danger"
+            disabled={!canPrestige}
+            onClick={onPrestige}
+          >
+            Resetar Campanha
+          </button>
+          <span className="prestige-note">
+            {canPrestige
+              ? 'Você perde jogadores, ouro, construções e melhorias. Conquistas, bênçãos, tramas e Destino ficam.'
+              : 'Ganhe 10K de jogadores no total para conseguir o primeiro Destino.'}
+          </span>
         </div>
       </div>
-    </div>
+
+      {groups.map((group) => (
+        <section className="prestige-group" key={group.name}>
+          <h3 className="prestige-heading">{group.name}</h3>
+          <div className="prestige-grid">
+            {group.blessings.map((blessing) => {
+              const owned = state.prestigeUpgradesBought.includes(blessing.id);
+              const available = blessing.req(state);
+              const canBuy = available && !owned && state.fate >= blessing.cost;
+              return (
+                <div
+                  key={blessing.id}
+                  className={`blessing${owned ? ' bought' : ''}${available ? '' : ' locked'}`}
+                >
+                  <div className="blessing-head">
+                    <img src={blessing.icon} alt="" className="blessing-icon" />
+                    <h4>{blessing.name}</h4>
+                  </div>
+                  <p className="blessing-desc">{blessing.desc}</p>
+                  {!available && blessing.reqHint ? (
+                    <p className="blessing-req">{blessing.reqHint}</p>
+                  ) : null}
+                  <div className="blessing-foot">
+                    <span className="blessing-cost">{blessing.cost} Destino</span>
+                    {owned ? (
+                      <span className="blessing-owned">Comprada</span>
+                    ) : (
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        disabled={!canBuy}
+                        onClick={() => onBuyPrestige(blessing.id, blessing.cost)}
+                      >
+                        {available ? 'Comprar' : 'Bloqueada'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      ))}
+    </Modal>
   );
 }

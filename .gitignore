@@ -145,3 +145,4 @@ release/
 *.sqlite
 *.sqlite3
 *.db
+/freebuff-sites-build/
