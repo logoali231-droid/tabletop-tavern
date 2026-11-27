@@ -49,41 +49,49 @@ export const tutorialSteps: TutorialStep[] = [
   {
     title: 'Dados e o D20',
     modal: 'minigame',
+    target: '.modal',
     text: 'Role o D20 com dados: 16+ dá produção x3, 20 é crítico (x5 e +1 Destino), 11–15 dá inspiração e 2–10 dá ouro. Aqui também se equipam os 6 conjuntos de dados, cada um com um trade-off entre clique, crítico e sorte dourada.',
   },
   {
     title: 'Grimório de Tramas',
     modal: 'garden',
+    target: '.modal',
     text: 'Plante tramas com inspiração e colha recursos, bônus temporários ou Destino. Tramas iguais vizinhas crescem mais rápido, e duas maduras diferentes cruzam para revelar um dos 13 híbridos.',
   },
   {
     title: 'Estúdio de Ideias',
     modal: 'studio',
+    target: '.modal',
     text: 'Gaste inspiração em 5 manuscritos com níveis sem limite: produção global, poder de clique, inspiração, dados dourados e velocidade das tramas. Os níveis sobrevivem a todos os resets.',
   },
   {
     title: 'Prestígio',
     modal: 'prestige',
+    target: '.modal',
     text: 'Quando a campanha render pelo menos 1 Destino, reinicie: você troca recursos e construções por Destino e compra 46 bênçãos em 8 grupos, que mudam regras do jogo para sempre.',
   },
   {
     title: 'Publicar a Campanha',
     modal: 'publish',
+    target: '.modal',
     text: 'A segunda camada: com 10 campanhas você publica a saga e ganha Lendas. Cada 5 campanhas valem 1 Lenda, e cada Lenda dá +5% produção e +5% Destino, para sempre.',
   },
   {
     title: 'Conquistas',
     modal: 'achievements',
+    target: '.modal',
     text: 'São 288 conquistas, cada uma valendo +2% de produção permanente. Use as abas por categoria, a busca e o filtro de bloqueadas para caçar as que faltam.',
   },
   {
     title: 'Estatísticas',
     modal: 'stats',
+    target: '.modal',
     text: 'Aqui ficam os totais, a produção por segundo, os multiplicadores ativos e tudo o que você construiu.',
   },
   {
     title: 'Opções e save',
     modal: 'settings',
+    target: '.modal',
     text: 'O jogo salva sozinho a cada 2 segundos. Neste painel você liga e desliga sons, exporta ou importa o save e pode apagar o progresso.',
   },
   {
