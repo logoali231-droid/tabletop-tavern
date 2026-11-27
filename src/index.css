@@ -1574,7 +1574,7 @@ h1, h2, h3, h4 { font-family: 'Cinzel', serif; letter-spacing: 0.3px; }
 .tutorial-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; }
 .tutorial-nav { display: flex; gap: 8px; }
 
-@media (max-width: 640px) {
+@media (max-width: 900px), (max-height: 700px) {
   .tutorial-card {
     right: 10px;
     left: 10px;
@@ -1589,7 +1589,6 @@ h1, h2, h3, h4 { font-family: 'Cinzel', serif; letter-spacing: 0.3px; }
   /* Split the screen: the open panel keeps the top half, the card keeps the bottom. */
   .tutorial-open .modal-backdrop { align-items: flex-start; padding: 10px; }
   .tutorial-open .modal { max-height: 52vh; }
-  .tutorial-open .modal-body { padding-bottom: 14px; }
 }
 
 /* ---------- help ---------- */
