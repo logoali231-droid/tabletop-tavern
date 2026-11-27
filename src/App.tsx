@@ -39,6 +39,7 @@ import {
   serializeSave,
   tryBuyBuilding,
   tryBuyPrestige,
+  tryBuyStudio,
   tryBuyUpgrade,
   tryEquipDie,
   tryHarvestPlot,
@@ -58,6 +59,7 @@ import GoldenDice from './components/GoldenDice';
 import NewsTicker from './components/NewsTicker';
 import OfflineModal from './components/OfflineModal';
 import GardenModal from './components/GardenModal';
+import StudioModal from './components/StudioModal';
 
 interface Particle {
   id: number;
@@ -324,6 +326,13 @@ export default function App() {
     scheduleGolden();
   };
 
+  const buyStudio = (id: string) => {
+    const next = tryBuyStudio(stateRef.current, id);
+    if (!next) return;
+    playSound('upgrade', stateRef.current.soundOn);
+    setState(next);
+  };
+
   const equipDie = (id: string) => {
     const next = tryEquipDie(stateRef.current, id);
     if (!next) return;
@@ -523,6 +532,10 @@ export default function App() {
           onSpeed={speedPlot}
           onClose={() => setModal(null)}
         />
+      ) : null}
+
+      {modal === 'studio' ? (
+        <StudioModal state={state} onBuy={buyStudio} onClose={() => setModal(null)} />
       ) : null}
 
       {modal === 'prestige' ? (

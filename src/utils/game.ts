@@ -7,6 +7,7 @@ import {
   hybridRecipes,
   goldenEffects,
   prestigeUpgradesData,
+  studioData,
   upgradesData,
 } from '../data/gameData';
 import {
@@ -20,6 +21,7 @@ import {
   Production,
   ResourceType,
   SeedData,
+  StudioUpgradeData,
 } from '../types';
 import { formatNumber } from './format';
 
@@ -90,6 +92,7 @@ export function createInitialState(): GameState {
     hybridSeeds: [],
     diceSet: ['d4'],
     equippedDie: 'd4',
+    studioLevels: {},
     soundOn: true,
   };
 }
@@ -126,11 +129,45 @@ export function getBoostDurationMult(state: GameState): number {
   return hasBlessing(state, 'goldenWeight') ? 1.5 : 1;
 }
 
+export function getStudioLevel(state: GameState, id: string): number {
+  return state.studioLevels[id] ?? 0;
+}
+
+/** +5% global production per Rascunho Eterno level. */
+export function getStudioProd(state: GameState): number {
+  return 1 + 0.05 * getStudioLevel(state, 'rascunho');
+}
+
+/** +8% click power per Punho Criativo level. */
+export function getStudioClick(state: GameState): number {
+  return 1 + 0.08 * getStudioLevel(state, 'punho');
+}
+
+/** +10% inspiration production per Fluxo de Ideias level. */
+export function getStudioInspiration(state: GameState): number {
+  return 1 + 0.1 * getStudioLevel(state, 'fluxo');
+}
+
+/** +4% golden dice frequency per Sorte Escrita level. */
+export function getStudioGolden(state: GameState): number {
+  return 1 + 0.04 * getStudioLevel(state, 'sorte');
+}
+
+/** +5% trama growth speed per Roteiro Afiado level. */
+export function getStudioGrowth(state: GameState): number {
+  return 1 + 0.05 * getStudioLevel(state, 'roteiro');
+}
+
+export function studioCost(upgrade: StudioUpgradeData, level: number): number {
+  return Math.ceil(upgrade.baseCost * Math.pow(upgrade.growth, level));
+}
+
 export function getProdMultiplier(state: GameState): number {
   return state.globalMultiplier
     * getCampaignBonus(state)
     * getFameBonus(state)
-    * getBoostProd(state);
+    * getBoostProd(state)
+    * getStudioProd(state);
 }
 
 export function getClickMultiplier(state: GameState): number {
@@ -175,6 +212,7 @@ export function getProduction(state: GameState): Production {
       total[resource as ResourceType] += amount ?? 0;
     }
   }
+  total.inspiration *= getStudioInspiration(state);
   return total;
 }
 
@@ -198,7 +236,7 @@ export function getCritMin(state: GameState): number {
 }
 
 export function getClickValue(state: GameState): number {
-  const base = getClickMultiplier(state) * getEquippedDie(state).clickMult;
+  const base = getClickMultiplier(state) * getEquippedDie(state).clickMult * getStudioClick(state);
   const fingerBonus = getFingerBonus(state) * getProduction(state).players;
   return base + fingerBonus;
 }
@@ -262,6 +300,21 @@ export function applyAchievements(state: GameState): GameState {
   return { ...base, achievements: [...base.achievements, ...unlocked] };
 }
 
+/** Buys one permanent level of an Estúdio de Ideias manuscript. */
+export function tryBuyStudio(state: GameState, id: string): GameState | null {
+  const upgrade = studioData.find((entry) => entry.id === id);
+  if (!upgrade) return null;
+  const level = getStudioLevel(state, id);
+  const cost = studioCost(upgrade, level);
+  if (state.inspiration < cost) return null;
+
+  return {
+    ...state,
+    inspiration: state.inspiration - cost,
+    studioLevels: { ...state.studioLevels, [id]: level + 1 },
+  };
+}
+
 /** Equips a die that has already been collected. */
 export function tryEquipDie(state: GameState, id: string): GameState | null {
   if (state.equippedDie === id) return null;
@@ -294,6 +347,7 @@ export function prestigeReset(state: GameState): GameState {
     achievements: [...state.achievements],
     diceSet: [...state.diceSet],
     equippedDie: state.equippedDie,
+    studioLevels: { ...state.studioLevels },
     goldenDiceCollected: state.goldenDiceCollected,
     diceRolls: state.diceRolls,
     plotsHarvested: state.plotsHarvested,
@@ -466,7 +520,7 @@ export function getGoldenDelayMult(state: GameState): number {
   let mult = 1;
   if (state.upgradesBought.includes('radiantDice')) mult *= 0.5;
   if (hasBlessing(state, 'luckOfTavern')) mult *= 0.5;
-  return mult / getEquippedDie(state).goldenMult;
+  return mult / getEquippedDie(state).goldenMult / getStudioGolden(state);
 }
 
 export function getStormCount(state: GameState, base: number): number {
@@ -633,7 +687,9 @@ export function getPlotStatus(state: GameState, index: number, now = Date.now())
   if (!seed) return null;
 
   const synergy = getPlotSynergy(state, index);
-  const speed = (hasBlessing(state, 'fastInk') ? 1.5 : 1) * (synergy ? 1.4 : 1);
+  const speed = (hasBlessing(state, 'fastInk') ? 1.5 : 1)
+    * (synergy ? 1.4 : 1)
+    * getStudioGrowth(state);
   const total = seed.growSeconds * 1000;
   const grown = Math.max(0, now - plot.plantedAt) * speed;
 
@@ -833,6 +889,7 @@ export function normalizeSave(raw: unknown): GameState | null {
       .filter((id) => gardenHybridsData.some((seed) => seed.id === id)),
     diceSet,
     equippedDie,
+    studioLevels: countRecord(parsed.studioLevels),
     soundOn: parsed.soundOn !== false,
   };
 

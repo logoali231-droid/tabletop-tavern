@@ -7,6 +7,7 @@ import {
   PrestigeUpgradeData,
   ResourceType,
   SeedData,
+  StudioUpgradeData,
   UpgradeData,
 } from '../types';
 import { milestoneNames, milestoneTiers } from './milestones';
@@ -1706,3 +1707,55 @@ export const hybridRecipes: Record<string, string> = {
   'encounter+portal': 'hybridPortalPerdido',
   'legend+war': 'hybridGuerraLendas',
 };
+
+/**
+ * Estúdio de Ideias: repeatable permanent upgrades paid with inspiration, so
+ * the resource stays worth farming after every trama is already planted.
+ */
+export const studioData: StudioUpgradeData[] = [
+  {
+    id: 'rascunho',
+    name: 'Rascunho Eterno',
+    icon: '/icons/scroll.svg',
+    desc: 'Toda a produção aumenta um pouco a cada nível.',
+    perLevel: '+5% produção global',
+    baseCost: 60,
+    growth: 1.55,
+  },
+  {
+    id: 'punho',
+    name: 'Punho Criativo',
+    icon: '/icons/brush.svg',
+    desc: 'A mão fica mais firme conforme você escreve.',
+    perLevel: '+8% poder de clique',
+    baseCost: 40,
+    growth: 1.5,
+  },
+  {
+    id: 'fluxo',
+    name: 'Fluxo de Ideias',
+    icon: '/icons/inspiration.svg',
+    desc: 'Mais ideias geram mais ideias.',
+    perLevel: '+10% produção de inspiração',
+    baseCost: 80,
+    growth: 1.6,
+  },
+  {
+    id: 'sorte',
+    name: 'Sorte Escrita',
+    icon: '/icons/golden-d20.svg',
+    desc: 'O destino gosta de quem escreve todos os dias.',
+    perLevel: 'Dados Dourados 4% mais frequentes',
+    baseCost: 200,
+    growth: 1.8,
+  },
+  {
+    id: 'roteiro',
+    name: 'Roteiro Afiado',
+    icon: '/icons/lute.svg',
+    desc: 'Tramas do Grimório crescem mais rápido.',
+    perLevel: '+5% velocidade das tramas',
+    baseCost: 150,
+    growth: 1.65,
+  },
+];

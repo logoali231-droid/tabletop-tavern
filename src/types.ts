@@ -2,7 +2,7 @@ export type ResourceType = 'players' | 'gold' | 'dice' | 'inspiration' | 'fate';
 
 export type BuyAmount = 1 | 10 | 100 | 'max';
 
-export type ModalId = 'prestige' | 'minigame' | 'achievements' | 'stats' | 'settings' | 'garden';
+export type ModalId = 'prestige' | 'minigame' | 'achievements' | 'stats' | 'settings' | 'garden' | 'studio';
 
 export type Production = Record<ResourceType, number>;
 
@@ -82,6 +82,8 @@ export interface GameState {
   hybridSeeds: string[];
   diceSet: string[];
   equippedDie: string | null;
+  /** Permanent Estúdio de Ideias levels, bought with inspiration. */
+  studioLevels: Record<string, number>;
   soundOn: boolean;
 }
 
@@ -121,6 +123,18 @@ export interface PrestigeUpgradeData {
   reqHint?: string;
   req: (state: GameState) => boolean;
   apply: (state: GameState) => void;
+}
+
+export interface StudioUpgradeData {
+  id: string;
+  name: string;
+  icon: string;
+  desc: string;
+  /** Bonus granted by each level, shown as text. */
+  perLevel: string;
+  baseCost: number;
+  /** Cost multiplier per level already owned. */
+  growth: number;
 }
 
 export interface AchievementData {

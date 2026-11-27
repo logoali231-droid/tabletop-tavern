@@ -42,6 +42,9 @@ export default function ResourceBar({ state, onOpen, savedAt }: Props) {
         <span className="autosave" key={savedAt} title="O progresso é salvo automaticamente">
           salvo
         </span>
+        <button type="button" className="btn btn-ghost" onClick={() => onOpen('studio')}>
+          <img src="/icons/inspiration.svg" alt="" className="game-icon" /> Ideias
+        </button>
         <button type="button" className="btn btn-ghost" onClick={() => onOpen('garden')}>
           <img src="/icons/scroll.svg" alt="" className="game-icon" /> Grimório
           {ready > 0 ? <span className="btn-badge">{ready}</span> : null}
